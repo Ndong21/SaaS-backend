@@ -23,7 +23,7 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 		c.String(http.StatusInternalServerError, "Internal Server Error: panic")
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
-
+	//stocks module
 	r.GET("/demo", h.handleGetDBTime)
 	r.POST("/product", h.handleCreateProduct)
 	r.POST("/category", h.handleCreateCategory)
@@ -33,6 +33,8 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.POST("/catalog", h.handleCreateCatalog)
 	r.GET("/product", h.handleGetProducts)
 	r.GET("/catalog", h.handleGetCatalog)
+
+	//blocks module
 
 	return r
 }
