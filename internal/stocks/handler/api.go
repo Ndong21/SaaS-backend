@@ -35,6 +35,16 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/catalog", h.handleGetCatalog)
 
 	//blocks module
+	// r.POST("/api/blocks/material", h.handleCreateMaterial)
+	// r.POST("/api/blocks/product", h.handleCreateBlockProduct)
+	// r.POST("/api/blocks/purchase", h.handleCreateBlockPurchase)
+	// r.POST("/api/blocks/sale", h.handleCreateBlockSale)
+	// r.POST("/api/blocks/team", h.handleCreateTeam)
+	// r.POST("/api/blocks/session", h.handleCreateSession)
+	// r.POST("/api/blocks/session/material", h.handleCreateSessionMaterial)
+	// r.POST("/api/blocks/session/product", h.handleCreateSessionProduct)
+	// // r.GET("/product", h.handleGetProducts)
+	// // r.GET("/catalog", h.handleGetCatalog)
 
 	return r
 }

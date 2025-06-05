@@ -30,29 +30,29 @@ CREATE TABLE "teams" (
   "email" VARCHAR
 );
 
--- sessions
+-- sessions: Predefined time slots (no team info here)
 CREATE TABLE "sessions" (
   "id" VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid()::varchar(36),
-  "team_id" VARCHAR(36) NOT NULL,
-  "start_time" TIMESTAMP NOT NULL,
-  "end_time" TIMESTAMP NOT NULL,
-  "created_at" TIMESTAMP DEFAULT now()
+  "session" VARCHAR NOT NULL  -- e.g., '7am–9am'
 );
 
--- session_materials
+-- session_materials: Materials a team used during a session
 CREATE TABLE "session_materials" (
   "session_id" VARCHAR(36) NOT NULL,
+  "team_id" VARCHAR(36) NOT NULL,
   "material_id" VARCHAR(36) NOT NULL,
+  "date" DATE NOT NULL,
   "quantity" INT NOT NULL,
-  PRIMARY KEY ("session_id", "material_id")
+  PRIMARY KEY ("session_id", "team_id", "material_id", "date")
 );
-
--- session_products
+-- session_products: Products a team made during a session
 CREATE TABLE "session_products" (
   "session_id" VARCHAR(36) NOT NULL,
+  "team_id" VARCHAR(36) NOT NULL,
   "product_id" VARCHAR(36) NOT NULL,
+  "date" DATE NOT NULL,
   "quantity" INT NOT NULL,
-  PRIMARY KEY ("session_id", "product_id")
+  PRIMARY KEY ("session_id", "team_id", "product_id", "date")
 );
 
 -- sales
