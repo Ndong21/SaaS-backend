@@ -9,9 +9,9 @@ import (
 )
 
 type Catalog struct {
-	ID        string  `json:"id"`
-	ProductID *string `json:"product_id"`
-	UnitPrice int32   `json:"unit_price"`
+	ID        string `json:"id"`
+	ProductID string `json:"product_id"`
+	UnitPrice int32  `json:"unit_price"`
 }
 
 type Category struct {
@@ -24,7 +24,6 @@ type Product struct {
 	ID          string `json:"id"`
 	CategoryID  string `json:"category_id"`
 	ProductName string `json:"product_name"`
-	Quantity    int32  `json:"quantity"`
 }
 
 type Purchase struct {
@@ -41,12 +40,12 @@ type Sale struct {
 	ProductID string           `json:"product_id"`
 	UnitPrice int32            `json:"unit_price"`
 	Quantity  int32            `json:"quantity"`
-	CreateAt  pgtype.Timestamp `json:"create_at"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 	CashierID *string          `json:"cashier_id"`
 }
 
 type Vendor struct {
-	ID          string  `json:"id"`
-	VendorName  string  `json:"vendor_name"`
-	Description *string `json:"description"`
+	ID             string `json:"id"`
+	VendorName     string `json:"vendor_name"`
+	VendorLocation string `json:"vendor_location"`
 }

@@ -37,6 +37,7 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	return r
 }
 
+// testing handler
 func (h *StockHandler) handleGetDBTime(c *gin.Context) {
 	time, err := h.querier.LoadTime(c)
 	if err != nil {
@@ -52,6 +53,11 @@ func (h *StockHandler) handleCreateCategory(c *gin.Context) {
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.CategoryName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category name is required"})
 		return
 	}
 

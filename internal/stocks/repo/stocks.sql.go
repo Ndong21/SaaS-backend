@@ -16,8 +16,8 @@ RETURNING id, product_id, unit_price
 `
 
 type CreateCatalogParams struct {
-	ProductID *string `json:"product_id"`
-	UnitPrice int32   `json:"unit_price"`
+	ProductID string `json:"product_id"`
+	UnitPrice int32  `json:"unit_price"`
 }
 
 func (q *Queries) CreateCatalog(ctx context.Context, arg CreateCatalogParams) (Catalog, error) {
@@ -46,26 +46,20 @@ func (q *Queries) CreateCategory(ctx context.Context, arg CreateCategoryParams) 
 }
 
 const createProduct = `-- name: CreateProduct :one
-INSERT INTO "products" (category_id, product_name, quantity)
-VALUES ($1,$2,$3)
-RETURNING id, category_id, product_name, quantity
+INSERT INTO "products" (category_id, product_name)
+VALUES ($1,$2)
+RETURNING id, category_id, product_name
 `
 
 type CreateProductParams struct {
 	CategoryID  string `json:"category_id"`
 	ProductName string `json:"product_name"`
-	Quantity    int32  `json:"quantity"`
 }
 
 func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (Product, error) {
-	row := q.db.QueryRow(ctx, createProduct, arg.CategoryID, arg.ProductName, arg.Quantity)
+	row := q.db.QueryRow(ctx, createProduct, arg.CategoryID, arg.ProductName)
 	var i Product
-	err := row.Scan(
-		&i.ID,
-		&i.CategoryID,
-		&i.ProductName,
-		&i.Quantity,
-	)
+	err := row.Scan(&i.ID, &i.CategoryID, &i.ProductName)
 	return i, err
 }
 
@@ -104,7 +98,7 @@ func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) 
 const createSale = `-- name: CreateSale :one
 INSErT INTO "sales" (product_id, unit_price, quantity)
 VALUES ($1, $2, $3)
-RETURNING id, product_id, unit_price, quantity, create_at, cashier_id
+RETURNING id, product_id, unit_price, quantity, created_at, cashier_id
 `
 
 type CreateSaleParams struct {
@@ -121,35 +115,34 @@ func (q *Queries) CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, e
 		&i.ProductID,
 		&i.UnitPrice,
 		&i.Quantity,
-		&i.CreateAt,
+		&i.CreatedAt,
 		&i.CashierID,
 	)
 	return i, err
 }
 
 const createVendor = `-- name: CreateVendor :one
-INSErT INTO "vendors" (vendor_name, description)
+INSErT INTO "vendors" (vendor_name, vendor_location)
 VALUES ($1, $2)
-RETURNING id, vendor_name, description
+RETURNING id, vendor_name, vendor_location
 `
 
 type CreateVendorParams struct {
-	VendorName  string  `json:"vendor_name"`
-	Description *string `json:"description"`
+	VendorName     string `json:"vendor_name"`
+	VendorLocation string `json:"vendor_location"`
 }
 
 func (q *Queries) CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error) {
-	row := q.db.QueryRow(ctx, createVendor, arg.VendorName, arg.Description)
+	row := q.db.QueryRow(ctx, createVendor, arg.VendorName, arg.VendorLocation)
 	var i Vendor
-	err := row.Scan(&i.ID, &i.VendorName, &i.Description)
+	err := row.Scan(&i.ID, &i.VendorName, &i.VendorLocation)
 	return i, err
 }
 
 const getAllProducts = `-- name: GetAllProducts :many
 SELECT 
 p.product_name,
-c.category_name,
-p.quantity
+c.category_name
 FROM products p 
 JOIN categories c ON p.category_id = c.id
 `
@@ -157,7 +150,6 @@ JOIN categories c ON p.category_id = c.id
 type GetAllProductsRow struct {
 	ProductName  string `json:"product_name"`
 	CategoryName string `json:"category_name"`
-	Quantity     int32  `json:"quantity"`
 }
 
 func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error) {
@@ -169,7 +161,7 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 	items := []GetAllProductsRow{}
 	for rows.Next() {
 		var i GetAllProductsRow
-		if err := rows.Scan(&i.ProductName, &i.CategoryName, &i.Quantity); err != nil {
+		if err := rows.Scan(&i.ProductName, &i.CategoryName); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

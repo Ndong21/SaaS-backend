@@ -4,8 +4,8 @@ VALUES ($1,$2)
 RETURNING *;
 
 -- name: CreateProduct :one
-INSERT INTO "products" (category_id, product_name, quantity)
-VALUES ($1,$2,$3)
+INSERT INTO "products" (category_id, product_name)
+VALUES ($1,$2)
 RETURNING *;
 
 -- name: LoadTime :one
@@ -22,7 +22,7 @@ VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: CreateVendor :one
-INSErT INTO "vendors" (vendor_name, description)
+INSErT INTO "vendors" (vendor_name, vendor_location)
 VALUES ($1, $2)
 RETURNING *;
 
@@ -34,8 +34,7 @@ RETURNING *;
 -- name: GetAllProducts :many
 SELECT 
 p.product_name,
-c.category_name,
-p.quantity
+c.category_name
 FROM products p 
 JOIN categories c ON p.category_id = c.id;
 
