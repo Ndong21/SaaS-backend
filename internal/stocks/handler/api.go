@@ -1,11 +1,12 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Ndong21/SaaS-software/internal/stocks/repo"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -396,9 +397,25 @@ func (h *StockHandler) handleLogin(c *gin.Context) {
 		return
 	}
 
-	// If valid, return user info (or generate JWT/token if needed)
-	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("login successful as %s", user.Role),
+	//generate token
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(time.Hour * 24).Unix(),
 	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte("dsjkfliojfsldk"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create token"})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("Authorization", tokenString, 3600*24, "", "", false, true)
+	// If valid, return user info (or generate JWT/token if needed)
+	c.JSON(http.StatusOK, gin.H{})
 
 }
