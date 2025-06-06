@@ -1,10 +1,12 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Ndong21/SaaS-software/internal/stocks/repo"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type StockHandler struct {
@@ -45,6 +47,10 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.POST("/api/blocks/session/product", h.handleCreateSessionProduct)
 	// r.GET("/product", h.handleGetProducts)
 	// r.GET("/catalog", h.handleGetCatalog)
+
+	// users
+	r.POST("/api/auth/user", h.handleCreateUser)
+	r.POST("/api/auth/login", h.handleLogin)
 
 	return r
 }
@@ -326,4 +332,73 @@ func (h *StockHandler) handleCreateSessionProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, sessionProduct)
+}
+
+// users
+// sign-up
+func (h *StockHandler) handleCreateUser(c *gin.Context) {
+	var req repo.CreateUserParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Hash the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// replace the raw password with its hashed version
+	req.Password = string(hashedPassword)
+
+	user, err := h.querier.CreateUser(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+// login
+func (h *StockHandler) handleLogin(c *gin.Context) {
+	// var req repo.CreateUserParams
+	var body struct {
+		Email    string
+		Password string
+	}
+
+	err := c.ShouldBindBodyWithJSON(&body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := h.querier.SelectRequestedUser(c, body.Email)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if user.ID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
+	}
+
+	// compare provided password with stored hassed password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
+		return
+	}
+
+	// If valid, return user info (or generate JWT/token if needed)
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("login successful as %s", user.Role),
+	})
+
 }

@@ -102,6 +102,15 @@ type Team struct {
 	Email       *string `json:"email"`
 }
 
+type User struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	PhoneNumber *string `json:"phone_number"`
+	Password    string  `json:"password"`
+	Role        string  `json:"role"`
+}
+
 type Vendor struct {
 	ID             string `json:"id"`
 	VendorName     string `json:"vendor_name"`

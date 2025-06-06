@@ -22,10 +22,16 @@ type Querier interface {
 	CreateSessionMaterials(ctx context.Context, arg CreateSessionMaterialsParams) (SessionMaterial, error)
 	CreateSessionProducts(ctx context.Context, arg CreateSessionProductsParams) (SessionProduct, error)
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error)
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
 	GetCatalog(ctx context.Context) ([]GetCatalogRow, error)
 	LoadTime(ctx context.Context) (interface{}, error)
+	// -- name: LogIn :one
+	// INSERT INTO "users" (email, password)
+	// VALUES ($1, $2)
+	// RETURNING *;
+	SelectRequestedUser(ctx context.Context, email string) (SelectRequestedUserRow, error)
 }
 
 var _ Querier = (*Queries)(nil)
