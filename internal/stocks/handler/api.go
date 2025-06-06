@@ -35,16 +35,16 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/catalog", h.handleGetCatalog)
 
 	//blocks module
-	// r.POST("/api/blocks/material", h.handleCreateMaterial)
-	// r.POST("/api/blocks/product", h.handleCreateBlockProduct)
-	// r.POST("/api/blocks/purchase", h.handleCreateBlockPurchase)
-	// r.POST("/api/blocks/sale", h.handleCreateBlockSale)
-	// r.POST("/api/blocks/team", h.handleCreateTeam)
-	// r.POST("/api/blocks/session", h.handleCreateSession)
-	// r.POST("/api/blocks/session/material", h.handleCreateSessionMaterial)
-	// r.POST("/api/blocks/session/product", h.handleCreateSessionProduct)
-	// // r.GET("/product", h.handleGetProducts)
-	// // r.GET("/catalog", h.handleGetCatalog)
+	r.POST("/api/blocks/material", h.handleCreateMaterial)
+	r.POST("/api/blocks/product", h.handleCreateBlockProduct)
+	r.POST("/api/blocks/purchase", h.handleCreateMaterialPurchase)
+	r.POST("/api/blocks/sale", h.handleCreateBlockSale)
+	r.POST("/api/blocks/team", h.handleCreateTeam)
+	r.POST("/api/blocks/session", h.handleCreateSession)
+	r.POST("/api/blocks/session/material", h.handleCreateSessionMaterial)
+	r.POST("/api/blocks/session/product", h.handleCreateSessionProduct)
+	// r.GET("/product", h.handleGetProducts)
+	// r.GET("/catalog", h.handleGetCatalog)
 
 	return r
 }
@@ -189,4 +189,141 @@ func (h *StockHandler) handleGetCatalog(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"catalog": catalog,
 	})
+}
+
+// endpoints for block production module
+func (h *StockHandler) handleCreateMaterial(c *gin.Context) {
+	var req repo.CreateMaterialParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	material, err := h.querier.CreateMaterial(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, material)
+}
+
+func (h *StockHandler) handleCreateBlockProduct(c *gin.Context) {
+	var req repo.CreateBlocksProductParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	product, err := h.querier.CreateBlocksProduct(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, product)
+}
+
+func (h *StockHandler) handleCreateMaterialPurchase(c *gin.Context) {
+	var req repo.CreateMaterialPurchaseParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	purchase, err := h.querier.CreateMaterialPurchase(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, purchase)
+}
+
+func (h *StockHandler) handleCreateBlockSale(c *gin.Context) {
+	var req repo.CreateBlockSaleParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sale, err := h.querier.CreateBlockSale(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, sale)
+}
+
+func (h *StockHandler) handleCreateTeam(c *gin.Context) {
+	var req repo.CreateTeamParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	team, err := h.querier.CreateTeam(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, team)
+}
+
+func (h *StockHandler) handleCreateSession(c *gin.Context) {
+	var req repo.CreateSessionParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	session, err := h.querier.CreateSession(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, session)
+}
+
+func (h *StockHandler) handleCreateSessionMaterial(c *gin.Context) {
+	var req repo.CreateSessionMaterialsParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sessionMaterial, err := h.querier.CreateSessionMaterials(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, sessionMaterial)
+}
+
+func (h *StockHandler) handleCreateSessionProduct(c *gin.Context) {
+	var req repo.CreateSessionProductsParams
+	err := c.ShouldBindBodyWithJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	sessionProduct, err := h.querier.CreateSessionProducts(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, sessionProduct)
 }
