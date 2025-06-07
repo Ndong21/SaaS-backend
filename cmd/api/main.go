@@ -23,6 +23,7 @@ type DBConfig struct {
 	DBPort      uint16 `conf:"env:DB_PORT,required"`
 	DBName      string `conf:"env:DB_Name,required"`
 	TLSDisabled bool   `conf:"env:DB_TLS_DISABLED"`
+	DBUrl       string `conf:"env:DB_URL,required"`
 }
 
 // Config holds the application configuration. This struct is populated from the .env in the current directory.
@@ -59,7 +60,8 @@ func run() error {
 	}
 
 	// We use the configuration values to get the database connection URL
-	dbConnectionURL := getPostgresConnectionURL(config.DB)
+	// dbConnectionURL := getPostgresConnectionURL(config.DB)
+	dbConnectionURL := config.DB.DBUrl
 	db, err := pgxpool.New(ctx, dbConnectionURL)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
@@ -127,5 +129,25 @@ func getPostgresConnectionURL(config DBConfig) string {
 		RawQuery: queryValues.Encode(),
 	}
 
+	fmt.Println(dbURL.String())
 	return dbURL.String()
 }
+
+// LoadUrl reads the DB_URL from a .env file or environment variable.
+// func LoadUrl() string {
+// 	// Check if .env file exists
+// 	if _, err := os.Stat(".env"); err == nil {
+// 		err = godotenv.Load()
+// 		if err != nil {
+// 			log.Fatal("Error loading .env file")
+// 		}
+// 	}
+
+// 	// Get the database URL from environment
+// 	dbURL := os.Getenv("DB_URL")
+// 	if dbURL == "" {
+// 		log.Fatal("DB_URL not found in environment")
+// 	}
+
+// 	return dbURL
+// }

@@ -10,7 +10,7 @@ migrate-down:
 	migrate -path db/migrations -database "postgresql://postgres:rfz@localhost:5431/rfz?sslmode=disable" -verbose down
 
 
-go run:
+run:
 	cd cmd/api && go run main.go
 
 sqlc generate:
