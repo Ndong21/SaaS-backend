@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Ndong21/SaaS-software/internal/stocks/repo"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
@@ -26,6 +27,18 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 		c.String(http.StatusInternalServerError, "Internal Server Error: panic")
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}))
+
+	// Add CORS middleware
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}
+
+	r.Use(cors.New(corsConfig))
+
 	//stocks module
 	r.GET("/demo", h.handleGetDBTime)
 	r.POST("/product", h.handleCreateProduct)
