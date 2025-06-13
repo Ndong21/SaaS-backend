@@ -204,6 +204,34 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 	return items, nil
 }
 
+const getAllVendors = `-- name: GetAllVendors :many
+SELECT 
+id,
+vendor_name,
+vendor_location
+FROM vendors
+`
+
+func (q *Queries) GetAllVendors(ctx context.Context) ([]Vendor, error) {
+	rows, err := q.db.Query(ctx, getAllVendors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Vendor{}
+	for rows.Next() {
+		var i Vendor
+		if err := rows.Scan(&i.ID, &i.VendorName, &i.VendorLocation); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getCatalog = `-- name: GetCatalog :many
 SELECT 
 p.product_name,
