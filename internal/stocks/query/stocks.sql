@@ -38,6 +38,13 @@ c.category_name
 FROM products p 
 JOIN categories c ON p.category_id = c.id;
 
+-- name: GetAllCategories :many
+SELECT 
+category_name,
+category_description
+FROM categories;
+
+
 -- name: GetCatalog :many
 SELECT 
 p.product_name,
