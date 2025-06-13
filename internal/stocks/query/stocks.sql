@@ -44,6 +44,13 @@ category_name,
 category_description
 FROM categories;
 
+-- name: GetAllVendors :many
+SELECT 
+id,
+vendor_name,
+vendor_location
+FROM vendors;
+
 
 -- name: GetCatalog :many
 SELECT 
