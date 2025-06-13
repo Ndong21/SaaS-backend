@@ -24,6 +24,7 @@ type Querier interface {
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error)
+	GetAllCategories(ctx context.Context) ([]GetAllCategoriesRow, error)
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
 	GetCatalog(ctx context.Context) ([]GetCatalogRow, error)
 	LoadTime(ctx context.Context) (interface{}, error)

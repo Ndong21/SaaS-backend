@@ -139,6 +139,38 @@ func (q *Queries) CreateVendor(ctx context.Context, arg CreateVendorParams) (Ven
 	return i, err
 }
 
+const getAllCategories = `-- name: GetAllCategories :many
+SELECT 
+category_name,
+category_description
+FROM categories
+`
+
+type GetAllCategoriesRow struct {
+	CategoryName        string `json:"category_name"`
+	CategoryDescription string `json:"category_description"`
+}
+
+func (q *Queries) GetAllCategories(ctx context.Context) ([]GetAllCategoriesRow, error) {
+	rows, err := q.db.Query(ctx, getAllCategories)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllCategoriesRow{}
+	for rows.Next() {
+		var i GetAllCategoriesRow
+		if err := rows.Scan(&i.CategoryName, &i.CategoryDescription); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllProducts = `-- name: GetAllProducts :many
 SELECT 
 p.product_name,
