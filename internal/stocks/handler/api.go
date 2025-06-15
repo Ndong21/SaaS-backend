@@ -51,6 +51,8 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/category", h.handleGetCategories)
 	r.GET("/catalog", h.handleGetCatalog)
 	r.GET("/vendor", h.handleGetVendors)
+	r.GET("/purchase", h.handleGetPurchases)
+	r.GET("/sale", h.handleGetSales)
 
 	//blocks module
 	r.POST("/api/blocks/material", h.handleCreateMaterial)
@@ -234,6 +236,30 @@ func (h *StockHandler) handleGetCatalog(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"catalog": catalog,
+	})
+}
+
+func (h *StockHandler) handleGetPurchases(c *gin.Context) {
+	purchases, err := h.querier.GetAllPurchases(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"purchases": purchases,
+	})
+}
+
+func (h *StockHandler) handleGetSales(c *gin.Context) {
+	sales, err := h.querier.GetAllSales(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"sales": sales,
 	})
 }
 

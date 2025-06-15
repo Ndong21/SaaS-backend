@@ -204,6 +204,108 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 	return items, nil
 }
 
+const getAllPurchases = `-- name: GetAllPurchases :many
+SELECT 
+  p.id,
+  pr.product_name,
+  p.total_price,
+  p.quantity,
+  TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
+  v.vendor_name
+FROM 
+  purchases p
+JOIN 
+  products pr ON p.product_id = pr.id
+LEFT JOIN 
+  vendors v ON p.vendor_id = v.id
+`
+
+type GetAllPurchasesRow struct {
+	ID           string  `json:"id"`
+	ProductName  string  `json:"product_name"`
+	TotalPrice   int32   `json:"total_price"`
+	Quantity     int32   `json:"quantity"`
+	PurchaseDate string  `json:"purchase_date"`
+	VendorName   *string `json:"vendor_name"`
+}
+
+func (q *Queries) GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error) {
+	rows, err := q.db.Query(ctx, getAllPurchases)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllPurchasesRow{}
+	for rows.Next() {
+		var i GetAllPurchasesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductName,
+			&i.TotalPrice,
+			&i.Quantity,
+			&i.PurchaseDate,
+			&i.VendorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllSales = `-- name: GetAllSales :many
+SELECT 
+  s.id,
+  pr.product_name,
+  s.unit_price,
+  s.quantity,
+  s.unit_price * s.quantity AS total_price,
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+FROM 
+  sales s
+JOIN 
+  products pr ON s.product_id = pr.id
+`
+
+type GetAllSalesRow struct {
+	ID          string `json:"id"`
+	ProductName string `json:"product_name"`
+	UnitPrice   int32  `json:"unit_price"`
+	Quantity    int32  `json:"quantity"`
+	TotalPrice  int32  `json:"total_price"`
+	SaleDate    string `json:"Sale_date"`
+}
+
+func (q *Queries) GetAllSales(ctx context.Context) ([]GetAllSalesRow, error) {
+	rows, err := q.db.Query(ctx, getAllSales)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetAllSalesRow{}
+	for rows.Next() {
+		var i GetAllSalesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductName,
+			&i.UnitPrice,
+			&i.Quantity,
+			&i.TotalPrice,
+			&i.SaleDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllVendors = `-- name: GetAllVendors :many
 SELECT 
 id,

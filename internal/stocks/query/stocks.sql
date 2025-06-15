@@ -58,3 +58,34 @@ p.product_name,
 c.unit_price
 FROM products p 
 JOIN catalog c ON p.id = c.product_id;
+
+-- name: GetAllPurchases :many
+SELECT 
+  p.id,
+  pr.product_name,
+  p.total_price,
+  p.quantity,
+  TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
+  v.vendor_name
+FROM 
+  purchases p
+JOIN 
+  products pr ON p.product_id = pr.id
+LEFT JOIN 
+  vendors v ON p.vendor_id = v.id;
+
+-- name: GetAllSales :many
+SELECT 
+  s.id,
+  pr.product_name,
+  s.unit_price,
+  s.quantity,
+  s.unit_price * s.quantity AS total_price,
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+FROM 
+  sales s
+JOIN 
+  products pr ON s.product_id = pr.id;
+
+
+
