@@ -62,6 +62,7 @@ type Purchase struct {
 	Quantity   int32            `json:"quantity"`
 	VendorID   *string          `json:"vendor_id"`
 	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	CashierID  *string          `json:"cashier_id"`
 }
 
 type Sale struct {
