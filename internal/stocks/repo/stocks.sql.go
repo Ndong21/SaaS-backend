@@ -64,9 +64,9 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 }
 
 const createPurchase = `-- name: CreatePurchase :one
-INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id)
-VALUES ($1, $2, $3, $4)
-RETURNING id, product_id, total_price, quantity, vendor_id, created_at
+INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id, cashier_id)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, product_id, total_price, quantity, vendor_id, created_at, cashier_id
 `
 
 type CreatePurchaseParams struct {
@@ -74,6 +74,7 @@ type CreatePurchaseParams struct {
 	TotalPrice int32   `json:"total_price"`
 	Quantity   int32   `json:"quantity"`
 	VendorID   *string `json:"vendor_id"`
+	CashierID  *string `json:"cashier_id"`
 }
 
 func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) (Purchase, error) {
@@ -82,6 +83,7 @@ func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) 
 		arg.TotalPrice,
 		arg.Quantity,
 		arg.VendorID,
+		arg.CashierID,
 	)
 	var i Purchase
 	err := row.Scan(
@@ -91,24 +93,31 @@ func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) 
 		&i.Quantity,
 		&i.VendorID,
 		&i.CreatedAt,
+		&i.CashierID,
 	)
 	return i, err
 }
 
 const createSale = `-- name: CreateSale :one
-INSErT INTO "sales" (product_id, unit_price, quantity)
-VALUES ($1, $2, $3)
+INSErT INTO "sales" (product_id, unit_price, quantity, cashier_id)
+VALUES ($1, $2, $3, $4)
 RETURNING id, product_id, unit_price, quantity, created_at, cashier_id
 `
 
 type CreateSaleParams struct {
-	ProductID string `json:"product_id"`
-	UnitPrice int32  `json:"unit_price"`
-	Quantity  int32  `json:"quantity"`
+	ProductID string  `json:"product_id"`
+	UnitPrice int32   `json:"unit_price"`
+	Quantity  int32   `json:"quantity"`
+	CashierID *string `json:"cashier_id"`
 }
 
 func (q *Queries) CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, error) {
-	row := q.db.QueryRow(ctx, createSale, arg.ProductID, arg.UnitPrice, arg.Quantity)
+	row := q.db.QueryRow(ctx, createSale,
+		arg.ProductID,
+		arg.UnitPrice,
+		arg.Quantity,
+		arg.CashierID,
+	)
 	var i Sale
 	err := row.Scan(
 		&i.ID,
@@ -211,13 +220,15 @@ SELECT
   p.total_price,
   p.quantity,
   TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
-  v.vendor_name
+  v.vendor_name,
+  u.name AS cashier
 FROM 
   purchases p
 JOIN 
   products pr ON p.product_id = pr.id
 LEFT JOIN 
   vendors v ON p.vendor_id = v.id
+LEFT JOIN users u ON u.id = p.cashier_id
 `
 
 type GetAllPurchasesRow struct {
@@ -227,6 +238,7 @@ type GetAllPurchasesRow struct {
 	Quantity     int32   `json:"quantity"`
 	PurchaseDate string  `json:"purchase_date"`
 	VendorName   *string `json:"vendor_name"`
+	Cashier      *string `json:"cashier"`
 }
 
 func (q *Queries) GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error) {
@@ -245,6 +257,7 @@ func (q *Queries) GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, er
 			&i.Quantity,
 			&i.PurchaseDate,
 			&i.VendorName,
+			&i.Cashier,
 		); err != nil {
 			return nil, err
 		}
@@ -263,20 +276,23 @@ SELECT
   s.unit_price,
   s.quantity,
   s.unit_price * s.quantity AS total_price,
-  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date",
+  u.name AS cashier
 FROM 
   sales s
 JOIN 
   products pr ON s.product_id = pr.id
+LEFT JOIN users u ON u.id = s.cashier_id
 `
 
 type GetAllSalesRow struct {
-	ID          string `json:"id"`
-	ProductName string `json:"product_name"`
-	UnitPrice   int32  `json:"unit_price"`
-	Quantity    int32  `json:"quantity"`
-	TotalPrice  int32  `json:"total_price"`
-	SaleDate    string `json:"Sale_date"`
+	ID          string  `json:"id"`
+	ProductName string  `json:"product_name"`
+	UnitPrice   int32   `json:"unit_price"`
+	Quantity    int32   `json:"quantity"`
+	TotalPrice  int32   `json:"total_price"`
+	SaleDate    string  `json:"Sale_date"`
+	Cashier     *string `json:"cashier"`
 }
 
 func (q *Queries) GetAllSales(ctx context.Context) ([]GetAllSalesRow, error) {
@@ -295,6 +311,7 @@ func (q *Queries) GetAllSales(ctx context.Context) ([]GetAllSalesRow, error) {
 			&i.Quantity,
 			&i.TotalPrice,
 			&i.SaleDate,
+			&i.Cashier,
 		); err != nil {
 			return nil, err
 		}

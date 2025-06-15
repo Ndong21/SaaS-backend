@@ -12,13 +12,13 @@ RETURNING *;
 SELECT NOW();
 
 -- name: CreatePurchase :one
-INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id)
-VALUES ($1, $2, $3, $4)
+INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id, cashier_id)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: CreateSale :one
-INSErT INTO "sales" (product_id, unit_price, quantity)
-VALUES ($1, $2, $3)
+INSErT INTO "sales" (product_id, unit_price, quantity, cashier_id)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: CreateVendor :one
@@ -66,13 +66,15 @@ SELECT
   p.total_price,
   p.quantity,
   TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
-  v.vendor_name
+  v.vendor_name,
+  u.name AS cashier
 FROM 
   purchases p
 JOIN 
   products pr ON p.product_id = pr.id
 LEFT JOIN 
-  vendors v ON p.vendor_id = v.id;
+  vendors v ON p.vendor_id = v.id
+LEFT JOIN users u ON u.id = p.cashier_id;
 
 -- name: GetAllSales :many
 SELECT 
@@ -81,11 +83,13 @@ SELECT
   s.unit_price,
   s.quantity,
   s.unit_price * s.quantity AS total_price,
-  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date",
+  u.name AS cashier
 FROM 
   sales s
 JOIN 
-  products pr ON s.product_id = pr.id;
+  products pr ON s.product_id = pr.id
+LEFT JOIN users u ON u.id = s.cashier_id;
 
 
 
