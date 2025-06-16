@@ -32,11 +32,33 @@ VALUES ($1, $2)
 RETURNING *;
 
 -- name: GetAllProducts :many
+WITH purchase_totals AS (
+  SELECT 
+    pr.id AS product_id,
+    pr.product_name,
+    c.category_name,
+    SUM(p.quantity) AS total_purchased
+  FROM purchases p
+  JOIN products pr ON p.product_id = pr.id
+  JOIN categories c ON pr.category_id = c.id
+  GROUP BY pr.id, pr.product_name, c.category_name
+),
+sales_totals AS (
+  SELECT 
+    s.product_id,
+    SUM(s.quantity) AS total_sold
+  FROM sales s
+  GROUP BY s.product_id
+)
 SELECT 
-p.product_name,
-c.category_name
-FROM products p 
-JOIN categories c ON p.category_id = c.id;
+  pt.product_name,
+  pt.category_name,
+  COALESCE(pt.total_purchased, 0) - COALESCE(st.total_sold, 0) AS quantity_left
+FROM 
+  purchase_totals pt
+LEFT JOIN 
+  sales_totals st ON pt.product_id = st.product_id;
+
 
 -- name: GetAllCategories :many
 SELECT 
