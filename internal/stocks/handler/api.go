@@ -300,19 +300,32 @@ func (h *StockHandler) handleCreateBlockProduct(c *gin.Context) {
 
 func (h *StockHandler) handleCreateMaterialPurchase(c *gin.Context) {
 	var req repo.CreateMaterialPurchaseParams
+
+	// Try to bind the request body to the struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid input: " + err.Error(),
+		})
 		return
 	}
 
-	purchase, err := h.querier.CreateMaterialPurchase(c, req)
+	// Attempt to create the material purchase in the database
+	_, err = h.querier.CreateMaterialPurchase(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create material purchase: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, purchase)
+	// Return a success message without the created object
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Material purchase created successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreateBlockSale(c *gin.Context) {
