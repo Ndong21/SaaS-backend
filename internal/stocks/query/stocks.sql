@@ -51,6 +51,7 @@ sales_totals AS (
   GROUP BY s.product_id
 )
 SELECT 
+  pt.product_id,
   pt.product_name,
   pt.category_name,
   COALESCE(pt.total_purchased, 0) - COALESCE(st.total_sold, 0) AS quantity_left
