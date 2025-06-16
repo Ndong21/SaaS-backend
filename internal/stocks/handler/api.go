@@ -53,6 +53,7 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/vendor", h.handleGetVendors)
 	r.GET("/purchase", h.handleGetPurchases)
 	r.GET("/sale", h.handleGetSales)
+	r.DELETE("/catalog/:id", h.handleDeleteCatalog)
 
 	//blocks module
 	r.POST("/api/blocks/material", h.handleCreateMaterial)
@@ -260,6 +261,25 @@ func (h *StockHandler) handleGetSales(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"sales": sales,
+	})
+}
+
+func (h *StockHandler) handleDeleteCatalog(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteProduct(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "catalog item successfully deleted",
+		"status":  "success",
 	})
 }
 

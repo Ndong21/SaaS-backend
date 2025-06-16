@@ -148,6 +148,16 @@ func (q *Queries) CreateVendor(ctx context.Context, arg CreateVendorParams) (Ven
 	return i, err
 }
 
+const deleteProduct = `-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = $1
+`
+
+func (q *Queries) DeleteProduct(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteProduct, id)
+	return err
+}
+
 const getAllCategories = `-- name: GetAllCategories :many
 SELECT 
 id,
