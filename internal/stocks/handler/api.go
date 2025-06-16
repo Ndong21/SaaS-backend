@@ -87,109 +87,227 @@ func (h *StockHandler) handleGetDBTime(c *gin.Context) {
 
 func (h *StockHandler) handleCreateCategory(c *gin.Context) {
 	var req repo.CreateCategoryParams
+
+	// Bind the request body to the struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
+	// Manual validation for category name
 	if req.CategoryName == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "category name is required"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Category name is required.",
+		})
 		return
 	}
 
-	category, err := h.querier.CreateCategory(c, req)
+	// Create the category in the database
+	_, err = h.querier.CreateCategory(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create category: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, category)
+	// Respond with success message only
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Category created successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreateProduct(c *gin.Context) {
 	var req repo.CreateProductParams
+
+	// Bind JSON request body to the struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
-	product, err := h.querier.CreateProduct(c, req)
+	// Optional: add your own required field checks here
+	if req.ProductName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Product name is required.",
+		})
+		return
+	}
+
+	// Create product
+	_, err = h.querier.CreateProduct(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create product: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, product)
+	// Respond with success only
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Product created successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreatePurchase(c *gin.Context) {
 	var req repo.CreatePurchaseParams
+
+	// Bind the request body to the struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
-	purchase, err := h.querier.CreatePurchase(c, req)
+	// Optional: Add field-level validation
+	if req.Quantity <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Quantity must be provided and greater than zero.",
+		})
+		return
+	}
+
+	// Attempt to create the purchase
+	_, err = h.querier.CreatePurchase(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create purchase: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, purchase)
+	// Respond with success message only
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Purchase created successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreateSale(c *gin.Context) {
 	var req repo.CreateSaleParams
+
+	// Bind JSON request to struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
-	sale, err := h.querier.CreateSale(c, req)
+	// Optional: Validate required fields
+	if req.ProductID == "" || req.Quantity <= 0 || req.UnitPrice <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Product ID, quantity, and unit price must be valid and greater than 0.",
+		})
+		return
+	}
+
+	// Attempt to create the sale
+	_, err = h.querier.CreateSale(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create sale: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, sale)
+	// Respond with a success message
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Sale recorded successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreateVendor(c *gin.Context) {
 	var req repo.CreateVendorParams
+
+	// Bind the request JSON to the struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
-	vendor, err := h.querier.CreateVendor(c, req)
+	// Optional: Validate required fields
+	if req.VendorName == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Vendor name is required.",
+		})
+		return
+	}
+
+	// Attempt to create the vendor
+	_, err = h.querier.CreateVendor(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create vendor: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, vendor)
+	// Respond with a success message
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Vendor created successfully.",
+	})
 }
 
 func (h *StockHandler) handleCreateCatalog(c *gin.Context) {
 	var req repo.CreateCatalogParams
+
+	// Bind JSON to struct
 	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
-	item, err := h.querier.CreateCatalog(c, req)
+	// Create catalog item
+	_, err = h.querier.CreateCatalog(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create catalog item: " + err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, item)
+	// Success response without returning the object
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Catalog item created successfully.",
+	})
 }
 
 func (h *StockHandler) handleGetProducts(c *gin.Context) {
@@ -271,7 +389,7 @@ func (h *StockHandler) handleDeleteCatalog(c *gin.Context) {
 		return
 	}
 
-	err := h.querier.DeleteProduct(c, id)
+	err := h.querier.DeleteCatalog(c, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

@@ -115,7 +115,7 @@ JOIN
   products pr ON s.product_id = pr.id
 LEFT JOIN users u ON u.id = s.cashier_id;
 
--- name: DeleteProduct :exec
+-- name: DeleteCatalog :exec
 DELETE FROM catalog
 WHERE id = $1;
 
