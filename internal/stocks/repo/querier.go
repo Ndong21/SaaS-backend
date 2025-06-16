@@ -24,7 +24,7 @@ type Querier interface {
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error)
-	DeleteProduct(ctx context.Context, id string) error
+	DeleteCatalog(ctx context.Context, id string) error
 	GetAllCategories(ctx context.Context) ([]Category, error)
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
 	GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error)
