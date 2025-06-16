@@ -150,26 +150,22 @@ func (q *Queries) CreateVendor(ctx context.Context, arg CreateVendorParams) (Ven
 
 const getAllCategories = `-- name: GetAllCategories :many
 SELECT 
+id,
 category_name,
 category_description
 FROM categories
 `
 
-type GetAllCategoriesRow struct {
-	CategoryName        string `json:"category_name"`
-	CategoryDescription string `json:"category_description"`
-}
-
-func (q *Queries) GetAllCategories(ctx context.Context) ([]GetAllCategoriesRow, error) {
+func (q *Queries) GetAllCategories(ctx context.Context) ([]Category, error) {
 	rows, err := q.db.Query(ctx, getAllCategories)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetAllCategoriesRow{}
+	items := []Category{}
 	for rows.Next() {
-		var i GetAllCategoriesRow
-		if err := rows.Scan(&i.CategoryName, &i.CategoryDescription); err != nil {
+		var i Category
+		if err := rows.Scan(&i.ID, &i.CategoryName, &i.CategoryDescription); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

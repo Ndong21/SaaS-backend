@@ -62,6 +62,7 @@ LEFT JOIN
 
 -- name: GetAllCategories :many
 SELECT 
+id,
 category_name,
 category_description
 FROM categories;
