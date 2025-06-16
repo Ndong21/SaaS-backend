@@ -196,6 +196,7 @@ sales_totals AS (
   GROUP BY s.product_id
 )
 SELECT 
+  pt.product_id,
   pt.product_name,
   pt.category_name,
   COALESCE(pt.total_purchased, 0) - COALESCE(st.total_sold, 0) AS quantity_left
@@ -206,6 +207,7 @@ LEFT JOIN
 `
 
 type GetAllProductsRow struct {
+	ProductID    string `json:"product_id"`
 	ProductName  string `json:"product_name"`
 	CategoryName string `json:"category_name"`
 	QuantityLeft int32  `json:"quantity_left"`
@@ -220,7 +222,12 @@ func (q *Queries) GetAllProducts(ctx context.Context) ([]GetAllProductsRow, erro
 	items := []GetAllProductsRow{}
 	for rows.Next() {
 		var i GetAllProductsRow
-		if err := rows.Scan(&i.ProductName, &i.CategoryName, &i.QuantityLeft); err != nil {
+		if err := rows.Scan(
+			&i.ProductID,
+			&i.ProductName,
+			&i.CategoryName,
+			&i.QuantityLeft,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
