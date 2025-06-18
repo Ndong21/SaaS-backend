@@ -368,26 +368,26 @@ const getAllVendors = `-- name: GetAllVendors :many
 SELECT 
 id,
 vendor_name,
-vendor_location
+vendor_location,
+description
 FROM vendors
 `
 
-type GetAllVendorsRow struct {
-	ID             string `json:"id"`
-	VendorName     string `json:"vendor_name"`
-	VendorLocation string `json:"vendor_location"`
-}
-
-func (q *Queries) GetAllVendors(ctx context.Context) ([]GetAllVendorsRow, error) {
+func (q *Queries) GetAllVendors(ctx context.Context) ([]Vendor, error) {
 	rows, err := q.db.Query(ctx, getAllVendors)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []GetAllVendorsRow{}
+	items := []Vendor{}
 	for rows.Next() {
-		var i GetAllVendorsRow
-		if err := rows.Scan(&i.ID, &i.VendorName, &i.VendorLocation); err != nil {
+		var i Vendor
+		if err := rows.Scan(
+			&i.ID,
+			&i.VendorName,
+			&i.VendorLocation,
+			&i.Description,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
