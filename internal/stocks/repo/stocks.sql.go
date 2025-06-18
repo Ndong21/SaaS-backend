@@ -131,20 +131,26 @@ func (q *Queries) CreateSale(ctx context.Context, arg CreateSaleParams) (Sale, e
 }
 
 const createVendor = `-- name: CreateVendor :one
-INSErT INTO "vendors" (vendor_name, vendor_location)
-VALUES ($1, $2)
-RETURNING id, vendor_name, vendor_location
+INSErT INTO "vendors" (vendor_name, vendor_location, description)
+VALUES ($1, $2, $3)
+RETURNING id, vendor_name, vendor_location, description
 `
 
 type CreateVendorParams struct {
 	VendorName     string `json:"vendor_name"`
 	VendorLocation string `json:"vendor_location"`
+	Description    string `json:"description"`
 }
 
 func (q *Queries) CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error) {
-	row := q.db.QueryRow(ctx, createVendor, arg.VendorName, arg.VendorLocation)
+	row := q.db.QueryRow(ctx, createVendor, arg.VendorName, arg.VendorLocation, arg.Description)
 	var i Vendor
-	err := row.Scan(&i.ID, &i.VendorName, &i.VendorLocation)
+	err := row.Scan(
+		&i.ID,
+		&i.VendorName,
+		&i.VendorLocation,
+		&i.Description,
+	)
 	return i, err
 }
 
@@ -366,15 +372,21 @@ vendor_location
 FROM vendors
 `
 
-func (q *Queries) GetAllVendors(ctx context.Context) ([]Vendor, error) {
+type GetAllVendorsRow struct {
+	ID             string `json:"id"`
+	VendorName     string `json:"vendor_name"`
+	VendorLocation string `json:"vendor_location"`
+}
+
+func (q *Queries) GetAllVendors(ctx context.Context) ([]GetAllVendorsRow, error) {
 	rows, err := q.db.Query(ctx, getAllVendors)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Vendor{}
+	items := []GetAllVendorsRow{}
 	for rows.Next() {
-		var i Vendor
+		var i GetAllVendorsRow
 		if err := rows.Scan(&i.ID, &i.VendorName, &i.VendorLocation); err != nil {
 			return nil, err
 		}
