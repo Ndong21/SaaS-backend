@@ -28,6 +28,7 @@ type BSale struct {
 	Quantity     int32            `json:"quantity"`
 	SellingPrice pgtype.Numeric   `json:"selling_price"`
 	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	CashierID    *string          `json:"cashier_id"`
 }
 
 type Catalog struct {

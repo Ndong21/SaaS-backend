@@ -12,19 +12,25 @@ import (
 )
 
 const createBlockSale = `-- name: CreateBlockSale :one
-INSERT INTO "b_sales" (product_id, selling_price, quantity)
-VALUES ($1, $2, $3)
-RETURNING id, product_id, quantity, selling_price, created_at
+INSERT INTO "b_sales" (product_id, selling_price, quantity, cashier_id)
+VALUES ($1, $2, $3, $4)
+RETURNING id, product_id, quantity, selling_price, created_at, cashier_id
 `
 
 type CreateBlockSaleParams struct {
 	ProductID    string         `json:"product_id"`
 	SellingPrice pgtype.Numeric `json:"selling_price"`
 	Quantity     int32          `json:"quantity"`
+	CashierID    *string        `json:"cashier_id"`
 }
 
 func (q *Queries) CreateBlockSale(ctx context.Context, arg CreateBlockSaleParams) (BSale, error) {
-	row := q.db.QueryRow(ctx, createBlockSale, arg.ProductID, arg.SellingPrice, arg.Quantity)
+	row := q.db.QueryRow(ctx, createBlockSale,
+		arg.ProductID,
+		arg.SellingPrice,
+		arg.Quantity,
+		arg.CashierID,
+	)
 	var i BSale
 	err := row.Scan(
 		&i.ID,
@@ -32,6 +38,7 @@ func (q *Queries) CreateBlockSale(ctx context.Context, arg CreateBlockSaleParams
 		&i.Quantity,
 		&i.SellingPrice,
 		&i.CreatedAt,
+		&i.CashierID,
 	)
 	return i, err
 }
@@ -209,4 +216,360 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 		&i.Email,
 	)
 	return i, err
+}
+
+const getBlockSales = `-- name: GetBlockSales :many
+SELECT 
+  bs.id,
+  bp.product_name,
+  bs.quantity,
+  bs.selling_price,
+  TO_CHAR(bs.created_at, 'MM-DD-YYYY') AS sale_date,
+  bs.cashier_id
+FROM b_sales bs
+JOIN b_products bp ON bs.product_id = bp.id
+`
+
+type GetBlockSalesRow struct {
+	ID           string         `json:"id"`
+	ProductName  string         `json:"product_name"`
+	Quantity     int32          `json:"quantity"`
+	SellingPrice pgtype.Numeric `json:"selling_price"`
+	SaleDate     string         `json:"sale_date"`
+	CashierID    *string        `json:"cashier_id"`
+}
+
+func (q *Queries) GetBlockSales(ctx context.Context) ([]GetBlockSalesRow, error) {
+	rows, err := q.db.Query(ctx, getBlockSales)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetBlockSalesRow{}
+	for rows.Next() {
+		var i GetBlockSalesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductName,
+			&i.Quantity,
+			&i.SellingPrice,
+			&i.SaleDate,
+			&i.CashierID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBlocksProducts = `-- name: GetBlocksProducts :many
+WITH produced_totals AS (
+  SELECT 
+    sp.product_id,
+    SUM(sp.quantity) AS quantity_produced
+  FROM session_products sp
+  GROUP BY sp.product_id
+),
+sales_totals AS (
+  SELECT 
+    bs.product_id,
+    SUM(bs.quantity) AS quantity_sold
+  FROM b_sales bs
+  GROUP BY bs.product_id
+)
+SELECT 
+  bp.id,
+  bp.product_name,
+  bp.description,
+  --COALESCE(pt.quantity_produced, 0) AS quantity_produced,
+  --COALESCE(st.quantity_sold, 0) AS quantity_sold,
+  COALESCE(pt.quantity_produced, 0) - COALESCE(st.quantity_sold, 0) AS quantity_left
+FROM b_products bp
+LEFT JOIN produced_totals pt ON bp.id = pt.product_id
+LEFT JOIN sales_totals st ON bp.id = st.product_id
+`
+
+type GetBlocksProductsRow struct {
+	ID           string `json:"id"`
+	ProductName  string `json:"product_name"`
+	Description  string `json:"description"`
+	QuantityLeft int32  `json:"quantity_left"`
+}
+
+func (q *Queries) GetBlocksProducts(ctx context.Context) ([]GetBlocksProductsRow, error) {
+	rows, err := q.db.Query(ctx, getBlocksProducts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetBlocksProductsRow{}
+	for rows.Next() {
+		var i GetBlocksProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProductName,
+			&i.Description,
+			&i.QuantityLeft,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMaterialPurchases = `-- name: GetMaterialPurchases :many
+SELECT 
+  bp.id,
+  m.material_name,
+  bp.quantity,
+  bp.price,
+  m.unit,
+  TO_CHAR(bp.created_at, 'MM-DD-YYYY') AS purchase_date
+FROM b_purchases bp
+JOIN materials m ON bp.material_id = m.id
+`
+
+type GetMaterialPurchasesRow struct {
+	ID           string         `json:"id"`
+	MaterialName string         `json:"material_name"`
+	Quantity     int32          `json:"quantity"`
+	Price        pgtype.Numeric `json:"price"`
+	Unit         string         `json:"unit"`
+	PurchaseDate string         `json:"purchase_date"`
+}
+
+func (q *Queries) GetMaterialPurchases(ctx context.Context) ([]GetMaterialPurchasesRow, error) {
+	rows, err := q.db.Query(ctx, getMaterialPurchases)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetMaterialPurchasesRow{}
+	for rows.Next() {
+		var i GetMaterialPurchasesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.MaterialName,
+			&i.Quantity,
+			&i.Price,
+			&i.Unit,
+			&i.PurchaseDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMaterials = `-- name: GetMaterials :many
+SELECT 
+  id,
+  material_name,
+  unit,
+  description
+FROM materials
+`
+
+func (q *Queries) GetMaterials(ctx context.Context) ([]Material, error) {
+	rows, err := q.db.Query(ctx, getMaterials)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Material{}
+	for rows.Next() {
+		var i Material
+		if err := rows.Scan(
+			&i.ID,
+			&i.MaterialName,
+			&i.Unit,
+			&i.Description,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSessionMaterials = `-- name: GetSessionMaterials :many
+SELECT 
+  -- Composite ID
+  sm.session_id || '_' || sm.team_id || '_' || sm.material_id || '_' || TO_CHAR(sm.date, 'YYYYMMDD') AS id,
+  s.session,
+  t.team_name,
+  m.material_name,
+  sm.quantity,
+  m.unit,
+  TO_CHAR(sm.date, 'MM-DD-YYYY') AS used_date
+FROM session_materials sm
+JOIN sessions s ON sm.session_id = s.id
+JOIN teams t ON sm.team_id = t.id
+JOIN materials m ON sm.material_id = m.id
+`
+
+type GetSessionMaterialsRow struct {
+	ID           interface{} `json:"id"`
+	Session      string      `json:"session"`
+	TeamName     string      `json:"team_name"`
+	MaterialName string      `json:"material_name"`
+	Quantity     int32       `json:"quantity"`
+	Unit         string      `json:"unit"`
+	UsedDate     string      `json:"used_date"`
+}
+
+func (q *Queries) GetSessionMaterials(ctx context.Context) ([]GetSessionMaterialsRow, error) {
+	rows, err := q.db.Query(ctx, getSessionMaterials)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetSessionMaterialsRow{}
+	for rows.Next() {
+		var i GetSessionMaterialsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Session,
+			&i.TeamName,
+			&i.MaterialName,
+			&i.Quantity,
+			&i.Unit,
+			&i.UsedDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSessionProducts = `-- name: GetSessionProducts :many
+SELECT 
+  -- Composite ID
+  sp.session_id || '_' || sp.team_id || '_' || sp.product_id || '_' || TO_CHAR(sp.date, 'YYYYMMDD') AS id,
+  s.session,
+  t.team_name,
+  bp.product_name,
+  sp.quantity,
+  TO_CHAR(sp.date, 'MM-DD-YYYY') AS production_date
+FROM session_products sp
+JOIN sessions s ON sp.session_id = s.id
+JOIN teams t ON sp.team_id = t.id
+JOIN b_products bp ON sp.product_id = bp.id
+`
+
+type GetSessionProductsRow struct {
+	ID             interface{} `json:"id"`
+	Session        string      `json:"session"`
+	TeamName       string      `json:"team_name"`
+	ProductName    string      `json:"product_name"`
+	Quantity       int32       `json:"quantity"`
+	ProductionDate string      `json:"production_date"`
+}
+
+func (q *Queries) GetSessionProducts(ctx context.Context) ([]GetSessionProductsRow, error) {
+	rows, err := q.db.Query(ctx, getSessionProducts)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetSessionProductsRow{}
+	for rows.Next() {
+		var i GetSessionProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Session,
+			&i.TeamName,
+			&i.ProductName,
+			&i.Quantity,
+			&i.ProductionDate,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSessions = `-- name: GetSessions :many
+SELECT 
+  id,
+  session,
+  description
+FROM sessions
+`
+
+func (q *Queries) GetSessions(ctx context.Context) ([]Session, error) {
+	rows, err := q.db.Query(ctx, getSessions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Session{}
+	for rows.Next() {
+		var i Session
+		if err := rows.Scan(&i.ID, &i.Session, &i.Description); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTeams = `-- name: GetTeams :many
+SELECT 
+  id,
+  team_name,
+  phone_number,
+  email
+FROM teams
+`
+
+func (q *Queries) GetTeams(ctx context.Context) ([]Team, error) {
+	rows, err := q.db.Query(ctx, getTeams)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Team{}
+	for rows.Next() {
+		var i Team
+		if err := rows.Scan(
+			&i.ID,
+			&i.TeamName,
+			&i.PhoneNumber,
+			&i.Email,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
