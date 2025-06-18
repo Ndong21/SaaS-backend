@@ -369,7 +369,7 @@ SELECT
 id,
 vendor_name,
 vendor_location,
-description
+COALESCE(description, '') AS description
 FROM vendors
 `
 

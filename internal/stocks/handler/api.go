@@ -264,7 +264,7 @@ func (h *StockHandler) handleCreateVendor(c *gin.Context) {
 	}
 
 	// Attempt to create the vendor
-	_, err = h.querier.CreateVendor(c, req)
+	v, err := h.querier.CreateVendor(c, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"status":  "error",
@@ -277,6 +277,7 @@ func (h *StockHandler) handleCreateVendor(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Vendor created successfully.",
+		"vendors": v,
 	})
 }
 
