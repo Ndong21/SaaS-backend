@@ -2,13 +2,10 @@ package api
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/Ndong21/SaaS-software/internal/stocks/repo"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type StockHandler struct {
@@ -64,12 +61,18 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.POST("/blocks/session", h.handleCreateSession)
 	r.POST("/blocks/session/material", h.handleCreateSessionMaterial)
 	r.POST("/blocks/session/product", h.handleCreateSessionProduct)
-	// r.GET("/product", h.handleGetProducts)
-	// r.GET("/catalog", h.handleGetCatalog)
+	r.GET("/blocks/product", h.handleGetBlockProduct)
+	r.GET("/blocks/material", h.handleGetBlockMaterial)
+	r.GET("/blocks/purchase", h.handleGetBlockMaterialPurchases)
+	r.GET("/blocks/team", h.handleGetTeam)
+	r.GET("/blocks/session", h.handleGetSessions)
+	r.GET("/blocks/sale", h.handleGetBlockSale)
+	r.GET("/blocks/session/material", h.handleGetSessionMaterial)
+	r.GET("/blocks/session/product", h.handleGetSessionProduct)
 
-	// users
-	r.POST("/api/auth/user", h.handleCreateUser)
-	r.POST("/api/auth/login", h.handleLogin)
+	// // users
+	// r.POST("/api/auth/user", h.handleCreateUser)
+	// r.POST("/api/auth/login", h.handleLogin)
 
 	return r
 }
@@ -404,36 +407,56 @@ func (h *StockHandler) handleDeleteCatalog(c *gin.Context) {
 // endpoints for block production module
 func (h *StockHandler) handleCreateMaterial(c *gin.Context) {
 	var req repo.CreateMaterialParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	material, err := h.querier.CreateMaterial(c, req)
+	_, err := h.querier.CreateMaterial(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create material",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, material)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Material created successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateBlockProduct(c *gin.Context) {
 	var req repo.CreateBlocksProductParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	product, err := h.querier.CreateBlocksProduct(c, req)
+	_, err := h.querier.CreateBlocksProduct(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create block type",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, product)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Block type created successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateMaterialPurchase(c *gin.Context) {
@@ -468,170 +491,364 @@ func (h *StockHandler) handleCreateMaterialPurchase(c *gin.Context) {
 
 func (h *StockHandler) handleCreateBlockSale(c *gin.Context) {
 	var req repo.CreateBlockSaleParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	sale, err := h.querier.CreateBlockSale(c, req)
+	_, err := h.querier.CreateBlockSale(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to record block sale",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, sale)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Block sale recorded successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateTeam(c *gin.Context) {
 	var req repo.CreateTeamParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	team, err := h.querier.CreateTeam(c, req)
+	_, err := h.querier.CreateTeam(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create team",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, team)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Team created successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateSession(c *gin.Context) {
 	var req repo.CreateSessionParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	session, err := h.querier.CreateSession(c, req)
+	_, err := h.querier.CreateSession(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to create session",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, session)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Session created successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateSessionMaterial(c *gin.Context) {
 	var req repo.CreateSessionMaterialsParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	sessionMaterial, err := h.querier.CreateSessionMaterials(c, req)
+	_, err := h.querier.CreateSessionMaterials(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to record session material",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, sessionMaterial)
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Session material recorded successfully",
+	})
 }
 
 func (h *StockHandler) handleCreateSessionProduct(c *gin.Context) {
 	var req repo.CreateSessionProductsParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	sessionProduct, err := h.querier.CreateSessionProducts(c, req)
+	_, err := h.querier.CreateSessionProducts(c, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to record session product",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, sessionProduct)
-}
-
-// users
-// sign-up
-func (h *StockHandler) handleCreateUser(c *gin.Context) {
-	var req repo.CreateUserParams
-	err := c.ShouldBindBodyWithJSON(&req)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Hash the password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// replace the raw password with its hashed version
-	req.Password = string(hashedPassword)
-
-	user, err := h.querier.CreateUser(c, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, user)
-}
-
-// login
-func (h *StockHandler) handleLogin(c *gin.Context) {
-	// var req repo.CreateUserParams
-	var body struct {
-		Email    string
-		Password string
-	}
-
-	err := c.ShouldBindBodyWithJSON(&body)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	user, err := h.querier.SelectRequestedUser(c, body.Email)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	if user.ID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
-	}
-
-	// compare provided password with stored hassed password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
-		return
-	}
-
-	//generate token
-	// Create a new token object, specifying signing method and the claims
-	// you would like it to contain.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Session product recorded successfully",
 	})
+}
 
-	// Sign and get the complete encoded token as a string using the secret
-	tokenString, err := token.SignedString([]byte("dsjkfliojfsldk"))
-
+func (h *StockHandler) handleGetBlockProduct(c *gin.Context) {
+	products, err := h.querier.GetBlocksProducts(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create token"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch block products",
+			"error":   err.Error(),
+		})
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("Authorization", tokenString, 3600*24, "", "", false, true)
-	// If valid, return user info (or generate JWT/token if needed)
-	c.JSON(http.StatusOK, gin.H{})
-
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "success",
+		"message":  "Block products retrieved successfully",
+		"products": products,
+	})
 }
+
+func (h *StockHandler) handleGetBlockMaterial(c *gin.Context) {
+	materials, err := h.querier.GetMaterials(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch materials",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":    "success",
+		"message":   "materials retrieved successfully",
+		"materials": materials,
+	})
+}
+
+func (h *StockHandler) handleGetBlockMaterialPurchases(c *gin.Context) {
+	purchases, err := h.querier.GetMaterialPurchases(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch material purchases",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":    "success",
+		"message":   "material purchases retrieved successfully",
+		"purchases": purchases,
+	})
+}
+
+func (h *StockHandler) handleGetTeam(c *gin.Context) {
+	teams, err := h.querier.GetTeams(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch teams",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "teams retrieved successfully",
+		"teams":   teams,
+	})
+}
+
+func (h *StockHandler) handleGetSessions(c *gin.Context) {
+	sessions, err := h.querier.GetSessions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch sessions",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "success",
+		"message":  "sessions retrieved successfully",
+		"sessions": sessions,
+	})
+}
+
+func (h *StockHandler) handleGetBlockSale(c *gin.Context) {
+	sales, err := h.querier.GetBlockSales(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch sales",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "sales retrieved successfully",
+		"sales":   sales,
+	})
+}
+
+func (h *StockHandler) handleGetSessionMaterial(c *gin.Context) {
+	session_materials, err := h.querier.GetSessionMaterials(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch session materials",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":            "success",
+		"message":           "session materials retrieved successfully",
+		"session_materials": session_materials,
+	})
+}
+
+func (h *StockHandler) handleGetSessionProduct(c *gin.Context) {
+	session_products, err := h.querier.GetSessionProducts(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to fetch session products",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":           "success",
+		"message":          "session products retrieved successfully",
+		"session_products": session_products,
+	})
+}
+
+// // users
+// // sign-up
+// func (h *StockHandler) handleCreateUser(c *gin.Context) {
+// 	var req repo.CreateUserParams
+// 	err := c.ShouldBindBodyWithJSON(&req)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	// Hash the password
+// 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	// replace the raw password with its hashed version
+// 	req.Password = string(hashedPassword)
+
+// 	user, err := h.querier.CreateUser(c, req)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	c.JSON(http.StatusOK, user)
+// }
+
+// // login
+// func (h *StockHandler) handleLogin(c *gin.Context) {
+// 	// var req repo.CreateUserParams
+// 	var body struct {
+// 		Email    string
+// 		Password string
+// 	}
+
+// 	err := c.ShouldBindBodyWithJSON(&body)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	user, err := h.querier.SelectRequestedUser(c, body.Email)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+
+// 	if user.ID == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
+// 	}
+
+// 	// compare provided password with stored hassed password
+// 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
+
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid email or password"})
+// 		return
+// 	}
+
+// 	//generate token
+// 	// Create a new token object, specifying signing method and the claims
+// 	// you would like it to contain.
+// 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+// 		"sub": user.ID,
+// 		"exp": time.Now().Add(time.Hour * 24).Unix(),
+// 	})
+
+// 	// Sign and get the complete encoded token as a string using the secret
+// 	tokenString, err := token.SignedString([]byte("dsjkfliojfsldk"))
+
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to create token"})
+// 		return
+// 	}
+
+// 	c.SetSameSite(http.SameSiteLaxMode)
+// 	c.SetCookie("Authorization", tokenString, 3600*24, "", "", false, true)
+// 	// If valid, return user info (or generate JWT/token if needed)
+// 	c.JSON(http.StatusOK, gin.H{})
+
+// }
