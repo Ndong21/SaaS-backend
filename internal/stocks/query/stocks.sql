@@ -73,7 +73,8 @@ FROM categories;
 SELECT 
 id,
 vendor_name,
-vendor_location
+vendor_location,
+description
 FROM vendors;
 
 
