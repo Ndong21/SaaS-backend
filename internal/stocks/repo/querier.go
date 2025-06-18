@@ -29,7 +29,7 @@ type Querier interface {
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
 	GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error)
 	GetAllSales(ctx context.Context) ([]GetAllSalesRow, error)
-	GetAllVendors(ctx context.Context) ([]Vendor, error)
+	GetAllVendors(ctx context.Context) ([]GetAllVendorsRow, error)
 	GetCatalog(ctx context.Context) ([]GetCatalogRow, error)
 	LoadTime(ctx context.Context) (interface{}, error)
 	// -- name: LogIn :one

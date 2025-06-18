@@ -116,4 +116,5 @@ type Vendor struct {
 	ID             string `json:"id"`
 	VendorName     string `json:"vendor_name"`
 	VendorLocation string `json:"vendor_location"`
+	Description    string `json:"description"`
 }

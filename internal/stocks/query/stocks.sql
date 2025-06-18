@@ -22,8 +22,8 @@ VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: CreateVendor :one
-INSErT INTO "vendors" (vendor_name, vendor_location)
-VALUES ($1, $2)
+INSErT INTO "vendors" (vendor_name, vendor_location, description)
+VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: CreateCatalog :one
