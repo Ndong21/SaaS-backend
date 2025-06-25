@@ -9,6 +9,18 @@ import (
 	"context"
 )
 
+const countSalesTransactions = `-- name: CountSalesTransactions :one
+SELECT COUNT(*) AS transaction_count
+FROM sales
+`
+
+func (q *Queries) CountSalesTransactions(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countSalesTransactions)
+	var transaction_count int64
+	err := row.Scan(&transaction_count)
+	return transaction_count, err
+}
+
 const createCatalog = `-- name: CreateCatalog :one
 INSErT INTO "catalog" (product_id, unit_price)
 VALUES ($1, $2)
@@ -440,4 +452,54 @@ func (q *Queries) LoadTime(ctx context.Context) (interface{}, error) {
 	var now interface{}
 	err := row.Scan(&now)
 	return now, err
+}
+
+const top5BestSellingProductsByRevenue = `-- name: Top5BestSellingProductsByRevenue :many
+SELECT 
+  p.id AS product_id,
+  p.product_name,
+  SUM(s.quantity * s.unit_price) AS total_revenue
+FROM sales s
+JOIN products p ON s.product_id = p.id
+GROUP BY p.id, p.product_name
+ORDER BY total_revenue DESC
+LIMIT 5
+`
+
+type Top5BestSellingProductsByRevenueRow struct {
+	ProductID    string `json:"product_id"`
+	ProductName  string `json:"product_name"`
+	TotalRevenue int64  `json:"total_revenue"`
+}
+
+func (q *Queries) Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5BestSellingProductsByRevenueRow, error) {
+	rows, err := q.db.Query(ctx, top5BestSellingProductsByRevenue)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Top5BestSellingProductsByRevenueRow{}
+	for rows.Next() {
+		var i Top5BestSellingProductsByRevenueRow
+		if err := rows.Scan(&i.ProductID, &i.ProductName, &i.TotalRevenue); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const totalSales = `-- name: TotalSales :one
+SELECT SUM(unit_price * quantity) AS total_sales
+FROM sales
+`
+
+func (q *Queries) TotalSales(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalSales)
+	var total_sales int64
+	err := row.Scan(&total_sales)
+	return total_sales, err
 }

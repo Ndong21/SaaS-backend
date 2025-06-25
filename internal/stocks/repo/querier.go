@@ -9,6 +9,7 @@ import (
 )
 
 type Querier interface {
+	CountSalesTransactions(ctx context.Context) (int64, error)
 	CreateBlockSale(ctx context.Context, arg CreateBlockSaleParams) (BSale, error)
 	CreateBlocksProduct(ctx context.Context, arg CreateBlocksProductParams) (BProduct, error)
 	CreateCatalog(ctx context.Context, arg CreateCatalogParams) (Catalog, error)
@@ -45,6 +46,8 @@ type Querier interface {
 	// VALUES ($1, $2)
 	// RETURNING *;
 	SelectRequestedUser(ctx context.Context, email string) (SelectRequestedUserRow, error)
+	Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5BestSellingProductsByRevenueRow, error)
+	TotalSales(ctx context.Context) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)
