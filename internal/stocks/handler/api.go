@@ -52,6 +52,10 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/sale", h.handleGetSales)
 	r.DELETE("/catalog/:id", h.handleDeleteCatalog)
 
+	r.GET("/reports/total-sales", h.handleGetTotalSales)
+	r.GET("/reports/transactions", h.handleGetTotalTransactions)
+	r.GET("/reports/top-products", h.handleGetTopProducts)
+
 	//blocks module
 	r.POST("/blocks/material", h.handleCreateMaterial)
 	r.POST("/blocks/product", h.handleCreateBlockProduct)
@@ -382,6 +386,42 @@ func (h *StockHandler) handleGetSales(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"sales": sales,
+	})
+}
+
+func (h *StockHandler) handleGetTotalSales(c *gin.Context) {
+	total_sales, err := h.querier.TotalSales(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_sales": total_sales,
+	})
+}
+
+func (h *StockHandler) handleGetTotalTransactions(c *gin.Context) {
+	total_transactions, err := h.querier.CountSalesTransactions(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"total_transactions": total_transactions,
+	})
+}
+
+func (h *StockHandler) handleGetTopProducts(c *gin.Context) {
+	top_products, err := h.querier.Top5BestSellingProductsByRevenue(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"top_selling_products": top_products,
 	})
 }
 

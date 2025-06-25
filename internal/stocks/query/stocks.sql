@@ -122,4 +122,25 @@ DELETE FROM catalog
 WHERE id = $1;
 
 
+-- name: TotalSales :one
+SELECT SUM(unit_price * quantity) AS total_sales
+FROM sales;
+
+-- name: CountSalesTransactions :one
+SELECT COUNT(*) AS transaction_count
+FROM sales;
+
+-- name: Top5BestSellingProductsByRevenue :many
+SELECT 
+  p.id AS product_id,
+  p.product_name,
+  SUM(s.quantity * s.unit_price) AS total_revenue
+FROM sales s
+JOIN products p ON s.product_id = p.id
+GROUP BY p.id, p.product_name
+ORDER BY total_revenue DESC
+LIMIT 5;
+
+
+
 
