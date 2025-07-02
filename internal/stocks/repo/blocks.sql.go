@@ -573,3 +573,42 @@ func (q *Queries) GetTeams(ctx context.Context) ([]Team, error) {
 	}
 	return items, nil
 }
+
+const updateBlockSale = `-- name: UpdateBlockSale :one
+UPDATE "b_sales"
+SET
+  product_id = $2,
+  selling_price = $3,
+  quantity = $4,
+  cashier_id = $5
+WHERE id = $1
+RETURNING id, product_id, quantity, selling_price, created_at, cashier_id
+`
+
+type UpdateBlockSaleParams struct {
+	ID           string         `json:"id"`
+	ProductID    string         `json:"product_id"`
+	SellingPrice pgtype.Numeric `json:"selling_price"`
+	Quantity     int32          `json:"quantity"`
+	CashierID    *string        `json:"cashier_id"`
+}
+
+func (q *Queries) UpdateBlockSale(ctx context.Context, arg UpdateBlockSaleParams) (BSale, error) {
+	row := q.db.QueryRow(ctx, updateBlockSale,
+		arg.ID,
+		arg.ProductID,
+		arg.SellingPrice,
+		arg.Quantity,
+		arg.CashierID,
+	)
+	var i BSale
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.Quantity,
+		&i.SellingPrice,
+		&i.CreatedAt,
+		&i.CashierID,
+	)
+	return i, err
+}

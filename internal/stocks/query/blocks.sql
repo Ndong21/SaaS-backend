@@ -139,3 +139,13 @@ FROM session_products sp
 JOIN sessions s ON sp.session_id = s.id
 JOIN teams t ON sp.team_id = t.id
 JOIN b_products bp ON sp.product_id = bp.id;
+
+-- name: UpdateBlockSale :one
+UPDATE "b_sales"
+SET
+  product_id = $2,
+  selling_price = $3,
+  quantity = $4,
+  cashier_id = $5
+WHERE id = $1
+RETURNING *;

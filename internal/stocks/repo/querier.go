@@ -48,6 +48,7 @@ type Querier interface {
 	SelectRequestedUser(ctx context.Context, email string) (SelectRequestedUserRow, error)
 	Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5BestSellingProductsByRevenueRow, error)
 	TotalSales(ctx context.Context) (int64, error)
+	UpdateBlockSale(ctx context.Context, arg UpdateBlockSaleParams) (BSale, error)
 }
 
 var _ Querier = (*Queries)(nil)
