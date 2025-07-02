@@ -12,8 +12,8 @@ RETURNING *;
 SELECT NOW();
 
 -- name: CreatePurchase :one
-INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id, cashier_id)
-VALUES ($1, $2, $3, $4, $5)
+INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id)
+VALUES ($1, $2, $3, $4)
 RETURNING *;
 
 -- name: CreateSale :one
@@ -92,8 +92,7 @@ SELECT
   p.total_price,
   p.quantity,
   TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
-  v.vendor_name,
-  u.name AS cashier
+  v.vendor_name
 FROM 
   purchases p
 JOIN 
@@ -109,8 +108,8 @@ SELECT
   s.unit_price,
   s.quantity,
   s.unit_price * s.quantity AS total_price,
-  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date",
-  u.name AS cashier
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+  --u.name AS cashier
 FROM 
   sales s
 JOIN 
@@ -134,6 +133,7 @@ FROM sales;
 SELECT 
   p.id AS product_id,
   p.product_name,
+  SUM(s.quantity) AS total_quantity_sold,
   SUM(s.quantity * s.unit_price) AS total_revenue
 FROM sales s
 JOIN products p ON s.product_id = p.id

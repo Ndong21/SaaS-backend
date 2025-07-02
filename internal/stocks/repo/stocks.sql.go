@@ -76,8 +76,8 @@ func (q *Queries) CreateProduct(ctx context.Context, arg CreateProductParams) (P
 }
 
 const createPurchase = `-- name: CreatePurchase :one
-INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id, cashier_id)
-VALUES ($1, $2, $3, $4, $5)
+INSErT INTO "purchases" (product_id, total_price, quantity, vendor_id)
+VALUES ($1, $2, $3, $4)
 RETURNING id, product_id, total_price, quantity, vendor_id, created_at, cashier_id
 `
 
@@ -86,7 +86,6 @@ type CreatePurchaseParams struct {
 	TotalPrice int32   `json:"total_price"`
 	Quantity   int32   `json:"quantity"`
 	VendorID   *string `json:"vendor_id"`
-	CashierID  *string `json:"cashier_id"`
 }
 
 func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) (Purchase, error) {
@@ -95,7 +94,6 @@ func (q *Queries) CreatePurchase(ctx context.Context, arg CreatePurchaseParams) 
 		arg.TotalPrice,
 		arg.Quantity,
 		arg.VendorID,
-		arg.CashierID,
 	)
 	var i Purchase
 	err := row.Scan(
@@ -273,8 +271,7 @@ SELECT
   p.total_price,
   p.quantity,
   TO_CHAR(p.created_at, 'DD-MM-YYYY') AS "purchase_date",
-  v.vendor_name,
-  u.name AS cashier
+  v.vendor_name
 FROM 
   purchases p
 JOIN 
@@ -291,7 +288,6 @@ type GetAllPurchasesRow struct {
 	Quantity     int32   `json:"quantity"`
 	PurchaseDate string  `json:"purchase_date"`
 	VendorName   *string `json:"vendor_name"`
-	Cashier      *string `json:"cashier"`
 }
 
 func (q *Queries) GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error) {
@@ -310,7 +306,6 @@ func (q *Queries) GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, er
 			&i.Quantity,
 			&i.PurchaseDate,
 			&i.VendorName,
-			&i.Cashier,
 		); err != nil {
 			return nil, err
 		}
@@ -329,8 +324,8 @@ SELECT
   s.unit_price,
   s.quantity,
   s.unit_price * s.quantity AS total_price,
-  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date",
-  u.name AS cashier
+  TO_CHAR(s.created_at, 'DD-MM-YYYY') AS "Sale_date"
+  --u.name AS cashier
 FROM 
   sales s
 JOIN 
@@ -339,13 +334,12 @@ LEFT JOIN users u ON u.id = s.cashier_id
 `
 
 type GetAllSalesRow struct {
-	ID          string  `json:"id"`
-	ProductName string  `json:"product_name"`
-	UnitPrice   int32   `json:"unit_price"`
-	Quantity    int32   `json:"quantity"`
-	TotalPrice  int32   `json:"total_price"`
-	SaleDate    string  `json:"Sale_date"`
-	Cashier     *string `json:"cashier"`
+	ID          string `json:"id"`
+	ProductName string `json:"product_name"`
+	UnitPrice   int32  `json:"unit_price"`
+	Quantity    int32  `json:"quantity"`
+	TotalPrice  int32  `json:"total_price"`
+	SaleDate    string `json:"Sale_date"`
 }
 
 func (q *Queries) GetAllSales(ctx context.Context) ([]GetAllSalesRow, error) {
@@ -364,7 +358,6 @@ func (q *Queries) GetAllSales(ctx context.Context) ([]GetAllSalesRow, error) {
 			&i.Quantity,
 			&i.TotalPrice,
 			&i.SaleDate,
-			&i.Cashier,
 		); err != nil {
 			return nil, err
 		}
@@ -458,6 +451,7 @@ const top5BestSellingProductsByRevenue = `-- name: Top5BestSellingProductsByReve
 SELECT 
   p.id AS product_id,
   p.product_name,
+  SUM(s.quantity) AS total_quantity_sold,
   SUM(s.quantity * s.unit_price) AS total_revenue
 FROM sales s
 JOIN products p ON s.product_id = p.id
@@ -467,9 +461,10 @@ LIMIT 5
 `
 
 type Top5BestSellingProductsByRevenueRow struct {
-	ProductID    string `json:"product_id"`
-	ProductName  string `json:"product_name"`
-	TotalRevenue int64  `json:"total_revenue"`
+	ProductID         string `json:"product_id"`
+	ProductName       string `json:"product_name"`
+	TotalQuantitySold int64  `json:"total_quantity_sold"`
+	TotalRevenue      int64  `json:"total_revenue"`
 }
 
 func (q *Queries) Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5BestSellingProductsByRevenueRow, error) {
@@ -481,7 +476,12 @@ func (q *Queries) Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5B
 	items := []Top5BestSellingProductsByRevenueRow{}
 	for rows.Next() {
 		var i Top5BestSellingProductsByRevenueRow
-		if err := rows.Scan(&i.ProductID, &i.ProductName, &i.TotalRevenue); err != nil {
+		if err := rows.Scan(
+			&i.ProductID,
+			&i.ProductName,
+			&i.TotalQuantitySold,
+			&i.TotalRevenue,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

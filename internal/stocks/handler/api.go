@@ -74,6 +74,8 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/blocks/session/material", h.handleGetSessionMaterial)
 	r.GET("/blocks/session/product", h.handleGetSessionProduct)
 
+	r.PUT("/blocks/sale/:id", h.handleUpdateBlockSale)
+
 	// // users
 	// r.POST("/api/auth/user", h.handleCreateUser)
 	// r.POST("/api/auth/login", h.handleLogin)
@@ -553,6 +555,42 @@ func (h *StockHandler) handleCreateBlockSale(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Block sale recorded successfully",
+	})
+}
+
+func (h *StockHandler) handleUpdateBlockSale(c *gin.Context) {
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	var req repo.UpdateBlockSaleParams
+	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"status":  "error",
+			"message": "Invalid request body",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	req.ID = id
+
+	_, err := h.querier.UpdateBlockSale(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to update block sale",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"message": "Block sale successfully updated",
 	})
 }
 
