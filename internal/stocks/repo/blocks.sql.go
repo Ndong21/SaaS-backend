@@ -218,6 +218,116 @@ func (q *Queries) CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, e
 	return i, err
 }
 
+const deleteBlockProduct = `-- name: DeleteBlockProduct :exec
+DELETE FROM b_products
+WHERE id = $1
+`
+
+func (q *Queries) DeleteBlockProduct(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteBlockProduct, id)
+	return err
+}
+
+const deleteBlockPurchase = `-- name: DeleteBlockPurchase :exec
+DELETE FROM b_purchases
+WHERE id = $1
+`
+
+func (q *Queries) DeleteBlockPurchase(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteBlockPurchase, id)
+	return err
+}
+
+const deleteBlockSale = `-- name: DeleteBlockSale :exec
+DELETE FROM b_sales
+WHERE id = $1
+`
+
+func (q *Queries) DeleteBlockSale(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteBlockSale, id)
+	return err
+}
+
+const deleteMaterial = `-- name: DeleteMaterial :exec
+DELETE FROM materials
+WHERE id = $1
+`
+
+func (q *Queries) DeleteMaterial(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteMaterial, id)
+	return err
+}
+
+const deleteSession = `-- name: DeleteSession :exec
+DELETE FROM sessions
+WHERE id = $1
+`
+
+func (q *Queries) DeleteSession(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteSession, id)
+	return err
+}
+
+const deleteSessionMaterial = `-- name: DeleteSessionMaterial :exec
+DELETE FROM session_materials
+WHERE session_id = $1
+  AND team_id = $2
+  AND material_id = $3
+  AND date = $4
+`
+
+type DeleteSessionMaterialParams struct {
+	SessionID  string      `json:"session_id"`
+	TeamID     string      `json:"team_id"`
+	MaterialID string      `json:"material_id"`
+	Date       pgtype.Date `json:"date"`
+}
+
+func (q *Queries) DeleteSessionMaterial(ctx context.Context, arg DeleteSessionMaterialParams) error {
+	_, err := q.db.Exec(ctx, deleteSessionMaterial,
+		arg.SessionID,
+		arg.TeamID,
+		arg.MaterialID,
+		arg.Date,
+	)
+	return err
+}
+
+const deleteSessionProduct = `-- name: DeleteSessionProduct :exec
+DELETE FROM session_products
+WHERE session_id = $1
+  AND team_id = $2
+  AND product_id = $3
+  AND date = $4
+`
+
+type DeleteSessionProductParams struct {
+	SessionID string      `json:"session_id"`
+	TeamID    string      `json:"team_id"`
+	ProductID string      `json:"product_id"`
+	Date      pgtype.Date `json:"date"`
+}
+
+func (q *Queries) DeleteSessionProduct(ctx context.Context, arg DeleteSessionProductParams) error {
+	_, err := q.db.Exec(ctx, deleteSessionProduct,
+		arg.SessionID,
+		arg.TeamID,
+		arg.ProductID,
+		arg.Date,
+	)
+	return err
+}
+
+const deleteTeam = `-- name: DeleteTeam :exec
+DELETE FROM teams
+WHERE id = $1
+`
+
+func (q *Queries) DeleteTeam(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteTeam, id)
+	return err
+}
+
 const getBlockSales = `-- name: GetBlockSales :many
 SELECT 
   bs.id,
@@ -574,32 +684,86 @@ func (q *Queries) GetTeams(ctx context.Context) ([]Team, error) {
 	return items, nil
 }
 
+const updateBlockProduct = `-- name: UpdateBlockProduct :one
+UPDATE b_products
+SET product_name = $1,
+    description = $2
+WHERE id = $3
+RETURNING id, product_name, description
+`
+
+type UpdateBlockProductParams struct {
+	ProductName string `json:"product_name"`
+	Description string `json:"description"`
+	ID          string `json:"id"`
+}
+
+// b_products
+func (q *Queries) UpdateBlockProduct(ctx context.Context, arg UpdateBlockProductParams) (BProduct, error) {
+	row := q.db.QueryRow(ctx, updateBlockProduct, arg.ProductName, arg.Description, arg.ID)
+	var i BProduct
+	err := row.Scan(&i.ID, &i.ProductName, &i.Description)
+	return i, err
+}
+
+const updateBlockPurchase = `-- name: UpdateBlockPurchase :one
+UPDATE b_purchases
+SET material_id = $1,
+    quantity = $2,
+    price = $3
+WHERE id = $4
+RETURNING id, material_id, quantity, price, created_at
+`
+
+type UpdateBlockPurchaseParams struct {
+	MaterialID string         `json:"material_id"`
+	Quantity   int32          `json:"quantity"`
+	Price      pgtype.Numeric `json:"price"`
+	ID         string         `json:"id"`
+}
+
+// b_purchases
+func (q *Queries) UpdateBlockPurchase(ctx context.Context, arg UpdateBlockPurchaseParams) (BPurchase, error) {
+	row := q.db.QueryRow(ctx, updateBlockPurchase,
+		arg.MaterialID,
+		arg.Quantity,
+		arg.Price,
+		arg.ID,
+	)
+	var i BPurchase
+	err := row.Scan(
+		&i.ID,
+		&i.MaterialID,
+		&i.Quantity,
+		&i.Price,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const updateBlockSale = `-- name: UpdateBlockSale :one
-UPDATE "b_sales"
-SET
-  product_id = $2,
-  selling_price = $3,
-  quantity = $4,
-  cashier_id = $5
-WHERE id = $1
+UPDATE b_sales
+SET product_id = $1,
+    quantity = $2,
+    selling_price = $3
+WHERE id = $4
 RETURNING id, product_id, quantity, selling_price, created_at, cashier_id
 `
 
 type UpdateBlockSaleParams struct {
-	ID           string         `json:"id"`
 	ProductID    string         `json:"product_id"`
-	SellingPrice pgtype.Numeric `json:"selling_price"`
 	Quantity     int32          `json:"quantity"`
-	CashierID    *string        `json:"cashier_id"`
+	SellingPrice pgtype.Numeric `json:"selling_price"`
+	ID           string         `json:"id"`
 }
 
+// b_sales
 func (q *Queries) UpdateBlockSale(ctx context.Context, arg UpdateBlockSaleParams) (BSale, error) {
 	row := q.db.QueryRow(ctx, updateBlockSale,
-		arg.ID,
 		arg.ProductID,
-		arg.SellingPrice,
 		arg.Quantity,
-		arg.CashierID,
+		arg.SellingPrice,
+		arg.ID,
 	)
 	var i BSale
 	err := row.Scan(
@@ -609,6 +773,172 @@ func (q *Queries) UpdateBlockSale(ctx context.Context, arg UpdateBlockSaleParams
 		&i.SellingPrice,
 		&i.CreatedAt,
 		&i.CashierID,
+	)
+	return i, err
+}
+
+const updateMaterial = `-- name: UpdateMaterial :one
+UPDATE materials
+SET material_name = $1,
+    unit = $2,
+    description = $3
+WHERE id = $4
+RETURNING id, material_name, unit, description
+`
+
+type UpdateMaterialParams struct {
+	MaterialName string  `json:"material_name"`
+	Unit         string  `json:"unit"`
+	Description  *string `json:"description"`
+	ID           string  `json:"id"`
+}
+
+// materials
+func (q *Queries) UpdateMaterial(ctx context.Context, arg UpdateMaterialParams) (Material, error) {
+	row := q.db.QueryRow(ctx, updateMaterial,
+		arg.MaterialName,
+		arg.Unit,
+		arg.Description,
+		arg.ID,
+	)
+	var i Material
+	err := row.Scan(
+		&i.ID,
+		&i.MaterialName,
+		&i.Unit,
+		&i.Description,
+	)
+	return i, err
+}
+
+const updateSession = `-- name: UpdateSession :one
+UPDATE sessions
+SET session = $1,
+    description = $2
+WHERE id = $3
+RETURNING id, session, description
+`
+
+type UpdateSessionParams struct {
+	Session     string `json:"session"`
+	Description string `json:"description"`
+	ID          string `json:"id"`
+}
+
+// sessions
+func (q *Queries) UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error) {
+	row := q.db.QueryRow(ctx, updateSession, arg.Session, arg.Description, arg.ID)
+	var i Session
+	err := row.Scan(&i.ID, &i.Session, &i.Description)
+	return i, err
+}
+
+const updateSessionMaterial = `-- name: UpdateSessionMaterial :one
+UPDATE session_materials
+SET quantity = $1
+WHERE session_id = $2
+  AND team_id = $3
+  AND material_id = $4
+  AND date = $5
+RETURNING session_id, team_id, material_id, date, quantity
+`
+
+type UpdateSessionMaterialParams struct {
+	Quantity   int32       `json:"quantity"`
+	SessionID  string      `json:"session_id"`
+	TeamID     string      `json:"team_id"`
+	MaterialID string      `json:"material_id"`
+	Date       pgtype.Date `json:"date"`
+}
+
+// session_materials
+func (q *Queries) UpdateSessionMaterial(ctx context.Context, arg UpdateSessionMaterialParams) (SessionMaterial, error) {
+	row := q.db.QueryRow(ctx, updateSessionMaterial,
+		arg.Quantity,
+		arg.SessionID,
+		arg.TeamID,
+		arg.MaterialID,
+		arg.Date,
+	)
+	var i SessionMaterial
+	err := row.Scan(
+		&i.SessionID,
+		&i.TeamID,
+		&i.MaterialID,
+		&i.Date,
+		&i.Quantity,
+	)
+	return i, err
+}
+
+const updateSessionProduct = `-- name: UpdateSessionProduct :one
+UPDATE session_products
+SET quantity = $1
+WHERE session_id = $2
+  AND team_id = $3
+  AND product_id = $4
+  AND date = $5
+RETURNING session_id, team_id, product_id, date, quantity
+`
+
+type UpdateSessionProductParams struct {
+	Quantity  int32       `json:"quantity"`
+	SessionID string      `json:"session_id"`
+	TeamID    string      `json:"team_id"`
+	ProductID string      `json:"product_id"`
+	Date      pgtype.Date `json:"date"`
+}
+
+// session_products
+func (q *Queries) UpdateSessionProduct(ctx context.Context, arg UpdateSessionProductParams) (SessionProduct, error) {
+	row := q.db.QueryRow(ctx, updateSessionProduct,
+		arg.Quantity,
+		arg.SessionID,
+		arg.TeamID,
+		arg.ProductID,
+		arg.Date,
+	)
+	var i SessionProduct
+	err := row.Scan(
+		&i.SessionID,
+		&i.TeamID,
+		&i.ProductID,
+		&i.Date,
+		&i.Quantity,
+	)
+	return i, err
+}
+
+const updateTeam = `-- name: UpdateTeam :one
+UPDATE teams
+SET team_name = $1,
+    phone_number = $2,
+    email = $3
+WHERE id = $4
+RETURNING id, team_name, phone_number, email
+`
+
+type UpdateTeamParams struct {
+	TeamName    string  `json:"team_name"`
+	PhoneNumber *string `json:"phone_number"`
+	Email       *string `json:"email"`
+	ID          string  `json:"id"`
+}
+
+// teams
+func (q *Queries) UpdateTeam(ctx context.Context, arg UpdateTeamParams) (Team, error) {
+	row := q.db.QueryRow(ctx, updateTeam,
+		arg.TeamName,
+		arg.PhoneNumber,
+		arg.Email,
+		arg.ID,
+	)
+	var i Team
+	err := row.Scan(
+		&i.ID,
+		&i.TeamName,
+		&i.PhoneNumber,
+		&i.Email,
 	)
 	return i, err
 }

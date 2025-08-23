@@ -141,6 +141,43 @@ GROUP BY p.id, p.product_name
 ORDER BY total_revenue DESC
 LIMIT 5;
 
+-- name: UpdateSales :one
+UPDATE sales
+SET unit_price = $1, quantity = $2
+WHERE id = $3
+RETURNING *;
 
+-- name: DeleteSale :exec
+DELETE FROM sales
+WHERE id = $1;
 
+-- name: UpdatePurchase :one
+UPDATE purchases
+SET total_price = $1, quantity = $2
+WHERE id = $3
+RETURNING *;
+
+-- name: DeletePurchase :exec
+DELETE FROM purchases
+WHERE id = $1;
+
+-- name: UpdateProduct :one
+UPDATE products
+SET category_id = $1, product_name = $2
+WHERE id = $3
+RETURNING *;
+
+-- name: Deleteproduct :exec
+DELETE FROM products
+WHERE id = $1;
+
+-- name: UpdateCategory :one
+UPDATE categories
+SET category_name = $1, category_description = $2
+WHERE id = $3
+RETURNING *;
+
+-- name: DeleteCategory :exec
+DELETE FROM categories
+WHERE id = $1;
 

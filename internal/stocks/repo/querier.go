@@ -25,7 +25,19 @@ type Querier interface {
 	CreateTeam(ctx context.Context, arg CreateTeamParams) (Team, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	CreateVendor(ctx context.Context, arg CreateVendorParams) (Vendor, error)
+	DeleteBlockProduct(ctx context.Context, id string) error
+	DeleteBlockPurchase(ctx context.Context, id string) error
+	DeleteBlockSale(ctx context.Context, id string) error
 	DeleteCatalog(ctx context.Context, id string) error
+	DeleteCategory(ctx context.Context, id string) error
+	DeleteMaterial(ctx context.Context, id string) error
+	DeletePurchase(ctx context.Context, id string) error
+	DeleteSale(ctx context.Context, id string) error
+	DeleteSession(ctx context.Context, id string) error
+	DeleteSessionMaterial(ctx context.Context, arg DeleteSessionMaterialParams) error
+	DeleteSessionProduct(ctx context.Context, arg DeleteSessionProductParams) error
+	DeleteTeam(ctx context.Context, id string) error
+	Deleteproduct(ctx context.Context, id string) error
 	GetAllCategories(ctx context.Context) ([]Category, error)
 	GetAllProducts(ctx context.Context) ([]GetAllProductsRow, error)
 	GetAllPurchases(ctx context.Context) ([]GetAllPurchasesRow, error)
@@ -48,7 +60,26 @@ type Querier interface {
 	SelectRequestedUser(ctx context.Context, email string) (SelectRequestedUserRow, error)
 	Top5BestSellingProductsByRevenue(ctx context.Context) ([]Top5BestSellingProductsByRevenueRow, error)
 	TotalSales(ctx context.Context) (int64, error)
+	// b_products
+	UpdateBlockProduct(ctx context.Context, arg UpdateBlockProductParams) (BProduct, error)
+	// b_purchases
+	UpdateBlockPurchase(ctx context.Context, arg UpdateBlockPurchaseParams) (BPurchase, error)
+	// b_sales
 	UpdateBlockSale(ctx context.Context, arg UpdateBlockSaleParams) (BSale, error)
+	UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error)
+	// materials
+	UpdateMaterial(ctx context.Context, arg UpdateMaterialParams) (Material, error)
+	UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error)
+	UpdatePurchase(ctx context.Context, arg UpdatePurchaseParams) (Purchase, error)
+	UpdateSales(ctx context.Context, arg UpdateSalesParams) (Sale, error)
+	// sessions
+	UpdateSession(ctx context.Context, arg UpdateSessionParams) (Session, error)
+	// session_materials
+	UpdateSessionMaterial(ctx context.Context, arg UpdateSessionMaterialParams) (SessionMaterial, error)
+	// session_products
+	UpdateSessionProduct(ctx context.Context, arg UpdateSessionProductParams) (SessionProduct, error)
+	// teams
+	UpdateTeam(ctx context.Context, arg UpdateTeamParams) (Team, error)
 }
 
 var _ Querier = (*Queries)(nil)
