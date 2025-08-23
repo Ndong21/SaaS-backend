@@ -140,12 +140,121 @@ JOIN sessions s ON sp.session_id = s.id
 JOIN teams t ON sp.team_id = t.id
 JOIN b_products bp ON sp.product_id = bp.id;
 
--- name: UpdateBlockSale :one
-UPDATE "b_sales"
-SET
-  product_id = $2,
-  selling_price = $3,
-  quantity = $4,
-  cashier_id = $5
-WHERE id = $1
+
+-- materials
+-- name: UpdateMaterial :one
+UPDATE materials
+SET material_name = $1,
+    unit = $2,
+    description = $3
+WHERE id = $4
 RETURNING *;
+
+-- name: DeleteMaterial :exec
+DELETE FROM materials
+WHERE id = $1;
+
+
+-- b_purchases
+-- name: UpdateBlockPurchase :one
+UPDATE b_purchases
+SET material_id = $1,
+    quantity = $2,
+    price = $3
+WHERE id = $4
+RETURNING *;
+
+-- name: DeleteBlockPurchase :exec
+DELETE FROM b_purchases
+WHERE id = $1;
+
+
+-- b_products
+-- name: UpdateBlockProduct :one
+UPDATE b_products
+SET product_name = $1,
+    description = $2
+WHERE id = $3
+RETURNING *;
+
+-- name: DeleteBlockProduct :exec
+DELETE FROM b_products
+WHERE id = $1;
+
+
+-- teams
+-- name: UpdateTeam :one
+UPDATE teams
+SET team_name = $1,
+    phone_number = $2,
+    email = $3
+WHERE id = $4
+RETURNING *;
+
+-- name: DeleteTeam :exec
+DELETE FROM teams
+WHERE id = $1;
+
+
+-- sessions
+-- name: UpdateSession :one
+UPDATE sessions
+SET session = $1,
+    description = $2
+WHERE id = $3
+RETURNING *;
+
+-- name: DeleteSession :exec
+DELETE FROM sessions
+WHERE id = $1;
+
+
+-- session_materials
+-- name: UpdateSessionMaterial :one
+UPDATE session_materials
+SET quantity = $1
+WHERE session_id = $2
+  AND team_id = $3
+  AND material_id = $4
+  AND date = $5
+RETURNING *;
+
+-- name: DeleteSessionMaterial :exec
+DELETE FROM session_materials
+WHERE session_id = $1
+  AND team_id = $2
+  AND material_id = $3
+  AND date = $4;
+
+
+-- session_products
+-- name: UpdateSessionProduct :one
+UPDATE session_products
+SET quantity = $1
+WHERE session_id = $2
+  AND team_id = $3
+  AND product_id = $4
+  AND date = $5
+RETURNING *;
+
+-- name: DeleteSessionProduct :exec
+DELETE FROM session_products
+WHERE session_id = $1
+  AND team_id = $2
+  AND product_id = $3
+  AND date = $4;
+
+
+-- b_sales
+-- name: UpdateBlockSale :one
+UPDATE b_sales
+SET product_id = $1,
+    quantity = $2,
+    selling_price = $3
+WHERE id = $4
+RETURNING *;
+
+-- name: DeleteBlockSale :exec
+DELETE FROM b_sales
+WHERE id = $1;
+

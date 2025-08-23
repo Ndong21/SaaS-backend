@@ -174,6 +174,46 @@ func (q *Queries) DeleteCatalog(ctx context.Context, id string) error {
 	return err
 }
 
+const deleteCategory = `-- name: DeleteCategory :exec
+DELETE FROM categories
+WHERE id = $1
+`
+
+func (q *Queries) DeleteCategory(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteCategory, id)
+	return err
+}
+
+const deletePurchase = `-- name: DeletePurchase :exec
+DELETE FROM purchases
+WHERE id = $1
+`
+
+func (q *Queries) DeletePurchase(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deletePurchase, id)
+	return err
+}
+
+const deleteSale = `-- name: DeleteSale :exec
+DELETE FROM sales
+WHERE id = $1
+`
+
+func (q *Queries) DeleteSale(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteSale, id)
+	return err
+}
+
+const deleteproduct = `-- name: Deleteproduct :exec
+DELETE FROM products
+WHERE id = $1
+`
+
+func (q *Queries) Deleteproduct(ctx context.Context, id string) error {
+	_, err := q.db.Exec(ctx, deleteproduct, id)
+	return err
+}
+
 const getAllCategories = `-- name: GetAllCategories :many
 SELECT 
 id,
@@ -502,4 +542,99 @@ func (q *Queries) TotalSales(ctx context.Context) (int64, error) {
 	var total_sales int64
 	err := row.Scan(&total_sales)
 	return total_sales, err
+}
+
+const updateCategory = `-- name: UpdateCategory :one
+UPDATE categories
+SET category_name = $1, category_description = $2
+WHERE id = $3
+RETURNING id, category_name, category_description
+`
+
+type UpdateCategoryParams struct {
+	CategoryName        string `json:"category_name"`
+	CategoryDescription string `json:"category_description"`
+	ID                  string `json:"id"`
+}
+
+func (q *Queries) UpdateCategory(ctx context.Context, arg UpdateCategoryParams) (Category, error) {
+	row := q.db.QueryRow(ctx, updateCategory, arg.CategoryName, arg.CategoryDescription, arg.ID)
+	var i Category
+	err := row.Scan(&i.ID, &i.CategoryName, &i.CategoryDescription)
+	return i, err
+}
+
+const updateProduct = `-- name: UpdateProduct :one
+UPDATE products
+SET category_id = $1, product_name = $2
+WHERE id = $3
+RETURNING id, category_id, product_name
+`
+
+type UpdateProductParams struct {
+	CategoryID  string `json:"category_id"`
+	ProductName string `json:"product_name"`
+	ID          string `json:"id"`
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) (Product, error) {
+	row := q.db.QueryRow(ctx, updateProduct, arg.CategoryID, arg.ProductName, arg.ID)
+	var i Product
+	err := row.Scan(&i.ID, &i.CategoryID, &i.ProductName)
+	return i, err
+}
+
+const updatePurchase = `-- name: UpdatePurchase :one
+UPDATE purchases
+SET total_price = $1, quantity = $2
+WHERE id = $3
+RETURNING id, product_id, total_price, quantity, vendor_id, created_at, cashier_id
+`
+
+type UpdatePurchaseParams struct {
+	TotalPrice int32  `json:"total_price"`
+	Quantity   int32  `json:"quantity"`
+	ID         string `json:"id"`
+}
+
+func (q *Queries) UpdatePurchase(ctx context.Context, arg UpdatePurchaseParams) (Purchase, error) {
+	row := q.db.QueryRow(ctx, updatePurchase, arg.TotalPrice, arg.Quantity, arg.ID)
+	var i Purchase
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.TotalPrice,
+		&i.Quantity,
+		&i.VendorID,
+		&i.CreatedAt,
+		&i.CashierID,
+	)
+	return i, err
+}
+
+const updateSales = `-- name: UpdateSales :one
+UPDATE sales
+SET unit_price = $1, quantity = $2
+WHERE id = $3
+RETURNING id, product_id, unit_price, quantity, created_at, cashier_id
+`
+
+type UpdateSalesParams struct {
+	UnitPrice int32  `json:"unit_price"`
+	Quantity  int32  `json:"quantity"`
+	ID        string `json:"id"`
+}
+
+func (q *Queries) UpdateSales(ctx context.Context, arg UpdateSalesParams) (Sale, error) {
+	row := q.db.QueryRow(ctx, updateSales, arg.UnitPrice, arg.Quantity, arg.ID)
+	var i Sale
+	err := row.Scan(
+		&i.ID,
+		&i.ProductID,
+		&i.UnitPrice,
+		&i.Quantity,
+		&i.CreatedAt,
+		&i.CashierID,
+	)
+	return i, err
 }
