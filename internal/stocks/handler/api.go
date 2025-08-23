@@ -51,6 +51,25 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/purchase", h.handleGetPurchases)
 	r.GET("/sale", h.handleGetSales)
 	r.DELETE("/catalog/:id", h.handleDeleteCatalog)
+	//delete sales
+	r.DELETE("/sale/:id", h.handleDeleteSale)
+	//update the sales table
+	r.PATCH("/sale/update", h.handleUpdateSales)
+
+	//delete purchase
+	r.DELETE("/purchase/:id", h.handleDeletePurchase)
+	//update the purchases table
+	r.PATCH("/purchase/update", h.handleUpdatePurchase)
+
+	//delete product
+	r.DELETE("/product/:id", h.handleDeleteProduct)
+	//update the product table
+	r.PATCH("/product/update", h.handleUpdateProduct)
+
+	//delete category
+	r.DELETE("/category/:id", h.handleDeleteCategory)
+	//update the categories table
+	r.PATCH("/category/update", h.handleUpdateCategory)
 
 	r.GET("/reports/total-sales", h.handleGetTotalSales)
 	r.GET("/reports/transactions", h.handleGetTotalTransactions)
@@ -74,7 +93,29 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 	r.GET("/blocks/session/material", h.handleGetSessionMaterial)
 	r.GET("/blocks/session/product", h.handleGetSessionProduct)
 
-	r.PUT("/blocks/sale/:id", h.handleUpdateBlockSale)
+	r.DELETE("/blocks/material/:id", h.handleDeleteMaterial)
+	r.PATCH("/blocks/material/update", h.handleUpdateMaterial)
+
+	r.DELETE("/blocks/purchase/:id", h.handleDeleteBlockPurchase)
+	r.PATCH("/blocks/purchase/update", h.handleUpdateBlockPurchase)
+
+	r.DELETE("/blocks/product/:id", h.handleDeleteBlockProduct)
+	r.PATCH("/blocks/product/update", h.handleUpdateBlockProduct)
+
+	r.DELETE("/blocks/team/:id", h.handleDeleteTeam)
+	r.PATCH("/blocks/team/update", h.handleUpdateTeam)
+
+	r.DELETE("/blocks/session/:id", h.handleDeleteSession)
+	r.PATCH("/blocks/session/update", h.handleUpdateSession)
+
+	r.DELETE("/blocks/session/material/:id", h.handleDeleteSessionMaterial)
+	r.PATCH("/blocks/session/material/update", h.handleUpdateSessionMaterial)
+
+	r.DELETE("/blocks/session/product/:id", h.handleDeleteSessionProduct)
+	r.PATCH("/blocks/session/product/update", h.handleUpdateSessionProduct)
+
+	r.DELETE("/blocks/sale/:id", h.handleDeleteBlockSale)
+	r.PATCH("/blocks/sale/update", h.handleUpdateBlockSale)
 
 	// // users
 	// r.POST("/api/auth/user", h.handleCreateUser)
@@ -446,6 +487,82 @@ func (h *StockHandler) handleDeleteCatalog(c *gin.Context) {
 	})
 }
 
+func (h *StockHandler) handleDeleteSale(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteSale(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "sale successfully deleted",
+		"status":  "success",
+	})
+}
+
+func (h *StockHandler) handleDeletePurchase(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeletePurchase(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "purchase successfully deleted",
+		"status":  "success",
+	})
+}
+
+func (h *StockHandler) handleDeleteProduct(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.Deleteproduct(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "product successfully deleted",
+		"status":  "success",
+	})
+}
+
+func (h *StockHandler) handleDeleteCategory(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteCategory(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "category successfully deleted",
+		"status":  "success",
+	})
+}
+
 // endpoints for block production module
 func (h *StockHandler) handleCreateMaterial(c *gin.Context) {
 	var req repo.CreateMaterialParams
@@ -555,42 +672,6 @@ func (h *StockHandler) handleCreateBlockSale(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"status":  "success",
 		"message": "Block sale recorded successfully",
-	})
-}
-
-func (h *StockHandler) handleUpdateBlockSale(c *gin.Context) {
-
-	id := c.Param("id")
-	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
-		return
-	}
-
-	var req repo.UpdateBlockSaleParams
-	if err := c.ShouldBindBodyWithJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  "error",
-			"message": "Invalid request body",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	req.ID = id
-
-	_, err := h.querier.UpdateBlockSale(c, req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"status":  "error",
-			"message": "Failed to update block sale",
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
-		"message": "Block sale successfully updated",
 	})
 }
 
@@ -844,6 +925,345 @@ func (h *StockHandler) handleGetSessionProduct(c *gin.Context) {
 		"message":          "session products retrieved successfully",
 		"session_products": session_products,
 	})
+}
+
+// Endpoint to update sales info
+func (h *StockHandler) handleUpdateSales(c *gin.Context) {
+	var req repo.UpdateSalesParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requst body"})
+	}
+
+	sales, err := h.querier.UpdateSales(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating sales data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"sales":  sales,
+	})
+}
+
+// Endpoint to update purchase info
+func (h *StockHandler) handleUpdatePurchase(c *gin.Context) {
+	var req repo.UpdatePurchaseParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requst body"})
+	}
+
+	purchase, err := h.querier.UpdatePurchase(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating purchase data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "success",
+		"purchase": purchase,
+	})
+}
+
+// Endpoint to update product info
+func (h *StockHandler) handleUpdateProduct(c *gin.Context) {
+	var req repo.UpdateProductParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requst body"})
+	}
+
+	product, err := h.querier.UpdateProduct(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating product data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"product": product,
+	})
+}
+
+// Endpoint to update category info
+func (h *StockHandler) handleUpdateCategory(c *gin.Context) {
+	var req repo.UpdateCategoryParams
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid requst body"})
+	}
+
+	category, err := h.querier.UpdateCategory(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating category data": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":   "success",
+		"category": category,
+	})
+}
+
+// update and delete on block module
+// Update material
+func (h *StockHandler) handleUpdateMaterial(c *gin.Context) {
+	var req repo.UpdateMaterialParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	material, err := h.querier.UpdateMaterial(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating material": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "material": material})
+}
+
+// Delete material
+func (h *StockHandler) handleDeleteMaterial(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteMaterial(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting material": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "material deleted"})
+}
+
+func (h *StockHandler) handleUpdateBlockPurchase(c *gin.Context) {
+	var req repo.UpdateBlockPurchaseParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	purchase, err := h.querier.UpdateBlockPurchase(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating purchase": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "purchase": purchase})
+}
+
+func (h *StockHandler) handleDeleteBlockPurchase(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteBlockPurchase(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting purchase": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "purchase deleted"})
+}
+
+func (h *StockHandler) handleUpdateBlockProduct(c *gin.Context) {
+	var req repo.UpdateBlockProductParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	product, err := h.querier.UpdateBlockProduct(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating product": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "product": product})
+}
+
+func (h *StockHandler) handleDeleteBlockProduct(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteBlockProduct(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting product": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "product deleted"})
+}
+
+func (h *StockHandler) handleUpdateTeam(c *gin.Context) {
+	var req repo.UpdateTeamParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	team, err := h.querier.UpdateTeam(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating team": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "team": team})
+}
+
+func (h *StockHandler) handleDeleteTeam(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteTeam(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting team": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "team deleted"})
+}
+
+func (h *StockHandler) handleUpdateSession(c *gin.Context) {
+	var req repo.UpdateSessionParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	session, err := h.querier.UpdateSession(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating session": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "session": session})
+}
+
+func (h *StockHandler) handleDeleteSession(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteSession(c, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting session": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "session deleted"})
+}
+
+func (h *StockHandler) handleUpdateSessionMaterial(c *gin.Context) {
+	var req repo.UpdateSessionMaterialParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	record, err := h.querier.UpdateSessionMaterial(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating session material": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "session_material": record})
+}
+
+func (h *StockHandler) handleDeleteSessionMaterial(c *gin.Context) {
+	var req repo.DeleteSessionMaterialParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	err := h.querier.DeleteSessionMaterial(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting session material": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "session material deleted"})
+}
+
+func (h *StockHandler) handleUpdateSessionProduct(c *gin.Context) {
+	var req repo.UpdateSessionProductParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	record, err := h.querier.UpdateSessionProduct(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating session product": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "session_product": record})
+}
+
+func (h *StockHandler) handleDeleteSessionProduct(c *gin.Context) {
+	var req repo.DeleteSessionProductParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	err := h.querier.DeleteSessionProduct(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting session product": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "session product deleted"})
+}
+
+func (h *StockHandler) handleUpdateBlockSale(c *gin.Context) {
+	var req repo.UpdateBlockSaleParams
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request body"})
+		return
+	}
+
+	sale, err := h.querier.UpdateBlockSale(c, req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error updating sale": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "sale": sale})
+}
+
+func (h *StockHandler) handleDeleteBlockSale(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		return
+	}
+
+	err := h.querier.DeleteBlockSale(c, id) // typo in your SQL name, should be DeleteBlockSale
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error deleting sale": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "message": "sale deleted"})
 }
 
 // // users
