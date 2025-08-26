@@ -27,7 +27,7 @@ func (h *StockHandler) WireHttpHandler() http.Handler {
 
 	// Add CORS middleware
 	corsConfig := cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://saas-z-ax4i.vercel.app"},
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:3001", "https://saas-z-ax4i.vercel.app", "https://saas-z-izn5.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
